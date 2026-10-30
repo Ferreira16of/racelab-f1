@@ -43,8 +43,8 @@
     $('#lv-cam', root).onclick = (e) => { camOn = !camOn; e.currentTarget.classList.toggle('pri', camOn); if (camOn && !follow) { const o = feed.order(T)[0]; if (o) toggle(o); } if (!camOn) { svg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`); cam = null; } };
     const frame = () => {
       feed.fix();
-      dots.forEach((g, n) => { const p = feed.at(n, T); if (!p) { g.style.display = 'none'; return; } const [px, py] = tm.project(p.x, p.y); g.style.display = ''; g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)})`); });
-      if (camOn && follow) { const p = feed.at(follow, T); if (p) { const [px, py] = tm.project(p.x, p.y), w = vw / 3.2, h = vh / 3.2; cam = cam ? [cam[0] + (px - cam[0]) * 0.12, cam[1] + (py - cam[1]) * 0.12] : [px, py]; svg.setAttribute('viewBox', `${(cam[0] - w / 2).toFixed(1)} ${(cam[1] - h / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`); } }
+      dots.forEach((g, n) => { const p = feed.at(n, T); if (!p) { g.style.display = 'none'; return; } const [px, py] = tm.project(p.x, p.y); g.style.display = ''; g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) scale(${camOn && follow ? 0.45 : 1})`); });
+      if (camOn && follow) { const p = feed.at(follow, T); if (p) { const [px, py] = tm.project(p.x, p.y), w = vw / 2.6, h = vh / 2.6; cam = cam ? [cam[0] + (px - cam[0]) * 0.12, cam[1] + (py - cam[1]) * 0.12] : [px, py]; svg.setAttribute('viewBox', `${(cam[0] - w / 2).toFixed(1)} ${(cam[1] - h / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`); } }
     };
     const drawBoard = () => {
       const ord = feed.order(T), shown = ord.length ? ord : [...ctx.drivers.keys()];
