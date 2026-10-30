@@ -407,3 +407,6 @@ tbody tr:has(a[href^="#/"]), .bar-row:has(a[href^="#/"]), .stint-row:has(a[href^
 .lv-rc { display: flex; flex-direction: column; gap: 6px; } .rcm { font-size: 12.5px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,.04); border-left: 3px solid var(--line-2); } .rcm span { font: 11px var(--mono); color: var(--tx-3); margin-right: 8px; } .rcm.yel { border-color: #ffd23a; } .rcm.red { border-color: #ff3b3b; }
 .lv-wx { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font: 12px var(--mono); color: var(--tx-2); }
 @media (max-width: 1000px) { .live-grid { grid-template-columns: minmax(0, 1fr); } .lv-board { max-height: 380px; } }
+
+/* fotos em retrato (arquivo histórico): mostrar o rosto inteiro, sem cortar */
+.avatar.photo.contain { background-size: contain; background-repeat: no-repeat; background-position: center bottom; background-color: #1a2236; }

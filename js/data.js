@@ -197,7 +197,7 @@
     root.querySelectorAll('.avatar[data-id]').forEach(async (a) => {
       const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family, dateOfBirth: a.dataset.dob };
       const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean)).catch(() => null);
-      if (u && a.isConnected) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = ''; }
+      if (u && a.isConnected) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); if (/statsf1/.test(u)) a.classList.add('contain'); a.textContent = ''; }
     });
   };
   GW.finished = (r) => /^(Finished|\+\d+ Laps?)$/.test(r.status || '') || /^\+/.test(r.status || '');
