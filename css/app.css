@@ -264,9 +264,7 @@ footer a { color: var(--tx-2); text-decoration: underline; text-underline-offset
 .skip { position: absolute; left: -999px; } .skip:focus { left: 10px; top: 10px; z-index: 200; background: var(--red); padding: 8px 12px; border-radius: 8px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
-.wiki { display: flex; gap: 16px; align-items: flex-start; } .wiki img { width: 140px; max-height: 120px; object-fit: cover; border-radius: 10px; flex-shrink: 0; } .wiki p { color: var(--tx-2); line-height: 1.6; }
-@media (max-width: 560px) { .wiki { flex-direction: column; } .wiki img { width: 100%; max-height: 180px; } }
-
+@media (max-width: 560px) { 
 #installBtn[hidden] { display: none; } #installBtn { background: var(--red); border-color: var(--red); color: #fff; flex-shrink: 0; }
 @media (max-width: 1260px) { #installBtn:not([hidden]) { margin-left: auto; } .burger { margin-left: 0; } }
 @media (display-mode: standalone) { body { overscroll-behavior-y: none; } }
@@ -357,7 +355,6 @@ td a { text-decoration: underline; text-decoration-color: rgba(255,255,255,.18);
   .stint-row { grid-template-columns: 44px 1fr; gap: 8px; }
   .toast { left: 14px; right: 14px; transform: none; text-align: center; }
   .tabs button { padding: 10px 12px; font-size: 13px; }
-  .wiki img { width: 100%; max-height: 190px; }
   .duel-card { padding: 14px; } .duel-who { font-size: 14px; }
 }
 @media (max-width: 380px) { .g4 { grid-template-columns: minmax(0, 1fr); } .quick { grid-template-columns: minmax(0, 1fr); } .tel-filters { grid-template-columns: minmax(0, 1fr); } }

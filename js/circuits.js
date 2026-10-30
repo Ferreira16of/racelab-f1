@@ -51,13 +51,12 @@
     const isFav = favs().includes(id);
     el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Circuito</span><h1>${esc(c.circuitName)}</h1><p class="sub">${esc(c.Location.locality)}, ${esc(c.Location.country)} · ${races.length} Grandes Prêmios na história da categoria</p></div>
       <div class="row"><button class="fav ${isFav ? 'on' : ''}" id="cfav" aria-label="Favoritar circuito" aria-pressed="${isFav}">${GW.ic('star')}</button>${modern.length ? GW.ctl('gy', 'Traçado/dados de', GW.options([...modern].reverse().map((r) => [r.season, r.season]), yr)) : ''}<a class="btn" href="#/circuits">← Todos</a></div></div>
-    <div id="wk" style="margin-bottom:16px"></div><div class="grid g-main"><div class="card"><div class="card-h"><h2>Traçado</h2><span id="mapchip"></span></div><div id="map">${GW.loading('Carregando geometria do traçado…')}</div><div id="mapx" class="mt-s"></div></div>
+    <div class="grid g-main"><div class="card"><div class="card-h"><h2>Traçado</h2><span id="mapchip"></span></div><div id="map">${GW.loading('Carregando geometria do traçado…')}</div><div id="mapx" class="mt-s"></div></div>
       <div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="card"><div class="card-h"><h2>Ficha técnica</h2></div><dl class="kv" id="spec"><dt>Nome oficial</dt><dd>${esc(c.circuitName)}</dd><dt>Localização</dt><dd>${esc(c.Location.locality)}</dd><dt>País</dt><dd>${esc(c.Location.country)}</dd><dt>Coordenadas</dt><dd>${(+c.Location.lat).toFixed(3)}, ${(+c.Location.long).toFixed(3)}</dd><dt>GPs disputados</dt><dd>${races.length}</dd><dt>Primeiro / último GP</dt><dd>${races[0].season} / ${races.at(-1).season}</dd></dl></div>
       <div class="card"><div class="card-h"><h2>Recordes documentados</h2></div><div id="rec">${GW.loading()}</div></div></div></div>
     <div class="grid g2 mt"><div class="card"><div class="card-h"><h2>Evolução da volta mais rápida da corrida</h2></div><div id="fl"></div></div><div class="card"><div class="card-h"><h2>Maiores vencedores aqui</h2></div><div id="top"></div></div></div>
     <div class="card flush mt"><div class="card-h" style="padding:14px 18px 0"><h2>Histórico de Grandes Prêmios</h2></div><div id="hist">${GW.loading()}</div></div>`;
     $('#cfav', el).onclick = (e) => { const f = favs(), i = f.indexOf(id); if (i < 0) f.push(id); else f.splice(i, 1); GW.store.set('favCircuits', f); e.currentTarget.classList.toggle('on', i < 0); e.currentTarget.setAttribute('aria-pressed', i < 0); GW.toast(i < 0 ? 'Circuito favoritado' : 'Removido dos favoritos'); };
-    GW.wikiInto($('#wk', el), c.url, 'Sobre o circuito');
     const gy = $('#gy', el); if (gy) gy.onchange = (e) => GW.go(`circuits/${id}/${e.target.value}`);
     GW.setCtx({ year: yr || GW.ctx.year });
 

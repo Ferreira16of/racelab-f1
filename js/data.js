@@ -141,12 +141,12 @@
   /** bandeira como imagem (emoji de bandeira não aparece no Windows) */
   GW.flag = (nat) => (ISO[nat] ? `<img class="flag" src="https://flagcdn.com/w40/${ISO[nat]}.png" srcset="https://flagcdn.com/w80/${ISO[nat]}.png 2x" alt="${GW.util.esc(nat)}" title="${GW.util.esc(nat)}" width="20" height="15" loading="lazy">` : '');
   /* ---------- fotos dos pilotos ----------
-     1) foto oficial da temporada (2024+), testando o slug da equipe; 2) foto da Wikipédia; 3) iniciais */
+     foto oficial da temporada (2024+), testando o slug da equipe; senão, iniciais */
   const TEAM_SLUG = { red_bull: ['redbullracing', 'redbull'], rb: ['racingbulls', 'rb'], alphatauri: ['alphatauri'], aston_martin: ['astonmartin'], haas: ['haasf1team', 'haas'], alpine: ['alpine'], alfa: ['alfaromeo'], sauber: ['kicksauber', 'sauber'], audi: ['audi'], cadillac: ['cadillac'], mercedes: ['mercedes'], ferrari: ['ferrari'], mclaren: ['mclaren'], williams: ['williams'] };
   const FB_SIZE = '29218'; // tamanho da imagem genérica devolvida quando a foto não existe
   const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
   const PHC = {};
-  GW.driverPhoto = (d, year, teamIds, wikiUrl) => {
+  GW.driverPhoto = (d, year, teamIds) => {
     const key = `${year}:${d.driverId}:${(teamIds || []).join(',')}`;
     return (PHC[key] = PHC[key] || (async () => {
       const ck = 'ph:' + key, saved = GW.store.get(ck, undefined); if (saved !== undefined && saved !== null) return saved || null;
@@ -158,7 +158,6 @@
           try { const r = await fetch(u, { method: 'HEAD' }); if (r.ok && r.headers.get('content-length') !== FB_SIZE && +r.headers.get('content-length') > 5000) { url = u; break; } } catch { /* tenta o próximo */ }
         }
       }
-      if (!url) { const w = await GW.wiki(wikiUrl || d.url).catch(() => null); url = w && w.thumb ? w.thumb : null; }
       GW.store.set(ck, url || '');
       return url;
     })());
@@ -166,36 +165,12 @@
   /** preenche os avatares [data-id] do contêiner com a foto do piloto */
   GW.hydratePhotos = (root) => {
     root.querySelectorAll('.avatar[data-id]').forEach(async (a) => {
-      const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family, url: a.dataset.wiki };
-      const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean), a.dataset.wiki).catch(() => null);
+      const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family };
+      const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean)).catch(() => null);
       if (u && a.isConnected) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = ''; }
     });
   };
   GW.finished = (r) => /^(Finished|\+\d+ Laps?)$/.test(r.status || '') || /^\+/.test(r.status || '');
   GW.yearSelect = async (id, sel) => { const ys = await J.seasons(); return GW.ctl(id, 'Temporada', GW.options(ys.map((y) => [y, y]), sel)); };
 
-  /* ---------- Wikipédia: resumo em português (fallback inglês) ---------- */
-  const WK = {};
-  GW.wiki = (url) => {
-    const m = /\/wiki\/([^#?]+)/.exec(url || ''); if (!m) return Promise.resolve(null);
-    let title = m[1]; try { title = decodeURIComponent(title); } catch { /* mantém */ }
-    return (WK[title] = WK[title] || (async () => {
-      const opt = { ttl: 30 * DAY, persist: true }, enc = encodeURIComponent(title);
-      const pick = (d, lang) => (d && d.extract ? { text: d.extract, thumb: d.thumbnail ? d.thumbnail.source : null, lang } : null);
-      try {
-        const ll = await GW.http(`https://en.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=pt&titles=${enc}&format=json&origin=*&redirects=1`, opt);
-        const pg = Object.values(ll.query.pages)[0], pt = pg && pg.langlinks && pg.langlinks[0] && pg.langlinks[0]['*'];
-        if (pt) { const r = pick(await GW.http(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pt)}`, opt), 'pt'); if (r) return r; }
-      } catch { /* tenta inglês */ }
-      try { return pick(await GW.http(`https://en.wikipedia.org/api/rest_v1/page/summary/${enc}`, opt), 'en'); } catch { return null; }
-    })());
-  };
-  /** preenche o contêiner com o resumo da Wikipédia; remove o contêiner se não houver conteúdo */
-  GW.wikiInto = async (box, url, label = 'Sobre') => {
-    if (!box) return; const w = await GW.wiki(url).catch(() => null);
-    if (!box.isConnected) return;
-    if (!w) { box.remove(); return; }
-    const cut = w.text.length > 900 ? w.text.lastIndexOf('. ', 900) + 1 : 0, t = cut > 200 ? w.text.slice(0, cut) : w.text.slice(0, 900);
-    box.innerHTML = `<div class="card"><div class="card-h"><h2>${label}</h2></div><div class="wiki">${w.thumb ? `<img src="${GW.util.esc(w.thumb)}" alt="" loading="lazy">` : ''}<div><p>${GW.util.esc(t)}</p><p class="note mt-s"><span>Texto: Wikipédia${w.lang === 'en' ? ' (em inglês)' : ''} · CC BY-SA</span></p></div></div></div>`;
-  };
 })();
