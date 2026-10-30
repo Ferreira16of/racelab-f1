@@ -86,7 +86,7 @@
     const liveSess = cur && cur.w.find((s) => s.status === 'live');
     const mode = p[0] === 'replay' ? 'replay' : p[0] === 'live' ? 'live' : (liveSess ? 'live' : 'replay');
     let stage = null;
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Acompanhe a corrida</span><h1>${mode === 'live' ? 'Ao vivo' : 'Replay na pista'}</h1><p class="sub">${mode === 'live' ? 'Acompanhe a sessão em andamento e abra o replay na pista assim que os dados forem liberados.' : 'Reveja qualquer sessão disputada: os carros se movem na pista com a classificação, os intervalos e a direção de prova.'}</p></div>
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Acompanhe a corrida</span><h1>${mode === 'live' ? 'Ao vivo' : 'Replay na pista'}</h1><p class="sub">${mode === 'live' ? 'Acompanhe a sessão em andamento e veja o replay dos carros na pista assim que ela terminar.' : 'Reveja qualquer sessão disputada: os carros se movem na pista com a classificação, os intervalos e a direção de prova.'}</p></div>
       <div class="seg"><button data-m="live" class="${mode === 'live' ? 'on' : ''}">${liveSess ? '<i class="livedot"></i> ' : ''}Ao vivo</button><button data-m="replay" class="${mode === 'replay' ? 'on' : ''}">Replay</button></div></div><div id="lv-root"></div>`;
     $$('.seg button', el).forEach((b) => (b.onclick = () => GW.go('live/' + b.dataset.m)));
     const root = $('#lv-root', el);
@@ -168,12 +168,11 @@
       } catch (e) { if (GW.alive(tk)) box.innerHTML = blocked(e); }
     }
   }
-  const blocked = (e) => /restrict|401|fetch|Failed|Muitas|indispon/i.test(e && e.message ? e.message : '') ? `<div class="state err">${GW.ic('alert')}<h3>Dados indisponíveis agora</h3><p>Enquanto há uma sessão em andamento, os dados detalhados ficam indisponíveis até ela terminar. Tente de novo em alguns minutos.</p></div>` : GW.error(e);
+  const blocked = (e) => /restrict|401|fetch|Failed|Muitas|indispon/i.test(e && e.message ? e.message : '') ? `<div class="state err">${GW.ic('alert')}<h3>Replay ainda indisponível</h3><p>Os dados desta sessão ainda estão sendo preparados. Tente de novo em alguns minutos.</p></div>` : GW.error(e);
   // consulta sem cache persistente (janelas grandes de posição)
   O.getRaw = async (path) => { const d = await GW.http(`${OB}/${path}`, { ttl: 30 * 60e3, persist: false }); return Array.isArray(d) ? d : []; };
 
   /* ---------- AO VIVO (somente fontes gratuitas) ----------
-     Não existe fonte gratuita de posições em tempo real: a OpenF1 libera os dados assim que a sessão termina.
      Esta tela acompanha a sessão pelo calendário e abre o replay automaticamente quando os dados forem liberados. */
   async function liveMode(root, o) {
     const { cur, liveSess, tk } = o;
@@ -185,7 +184,7 @@
     const wk = cur.w;
     root.innerHTML = `<div class="card live-wait"><div class="live-head"><span class="chip live"><i class="livedot"></i> Sessão em andamento</span><b style="font:700 22px var(--disp)">${esc(liveSess.name)}</b><span class="muted">${esc(cur.r.raceName)}</span></div>
       <div class="lbar mt-s" aria-hidden="true"><i id="wprog"></i></div><div class="lmeta"><span>Começou às ${esc(liveSess.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))}</span><span>Termina em <b id="wrem">—</b> (${esc(liveSess.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))})</span></div>
-      <div id="wnote" class="banner info mt-s">Os dados de posição dos carros só ficam disponíveis <b>depois que a sessão termina</b> (não há fonte gratuita em tempo real). Assim que forem liberados, o replay desta sessão abre aqui — pode deixar esta página aberta.</div>
+      <div id="wnote" class="banner info mt-s">O replay desta sessão, com os carros na pista, abre aqui assim que ela terminar — pode deixar esta página aberta.</div>
       <div id="wgo" class="mt-s"></div></div>
       <div class="card mt"><div class="card-h"><h2>Fim de semana</h2><span class="meta">Horários em ${U.tz} (${U.tzShort()})</span></div><div class="sess-list">${wk.map((s) => `<div class="sess ${s.status}"><span class="n">${esc(s.name)}</span><span class="t">${esc(U.fmtDT(s.start))}</span><span class="chip ${s.status === 'live' ? 'live' : s.status === 'future' ? 'next' : ''}">${{ done: 'concluída', live: 'em andamento', future: 'futura' }[s.status]}</span></div>`).join('')}</div></div>`;
     const hms = (ms) => { const t = Math.max(0, Math.round(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60); return `${h ? h + ':' + String(m).padStart(2, '0') : m}:${String(t % 60).padStart(2, '0')}`; };
@@ -195,8 +194,8 @@
     const check = async () => {
       if (!GW.alive(tk)) return clearInterval(poll);
       if (Date.now() < +liveSess.end) return; polls++;
-      try { const r = await fetch(`${OB}/sessions?session_key=latest`, { cache: 'no-store' }); if (!r.ok) throw new Error('bloqueada'); clearInterval(poll); clearInterval(iv); $('#wnote', root).innerHTML = '<b>Dados liberados!</b> O replay da sessão que acabou de terminar já pode ser aberto.'; $('#wgo', root).innerHTML = `<a class="btn pri" href="#/live/replay">${GW.ic('play')} Abrir o replay agora</a>`; }
-      catch { const n = $('#wnote', root); if (n) n.innerHTML = `Sessão encerrada. Aguardando a liberação dos dados de posição${polls > 1 ? ` (verificação ${polls})` : ''}… costuma levar alguns minutos.`; }
+      try { const r = await fetch(`${OB}/sessions?session_key=latest`, { cache: 'no-store' }); if (!r.ok) throw new Error('bloqueada'); clearInterval(poll); clearInterval(iv); $('#wnote', root).innerHTML = '<b>Replay pronto!</b> A sessão que acabou de terminar já pode ser assistida.'; $('#wgo', root).innerHTML = `<a class="btn pri" href="#/live/replay">${GW.ic('play')} Abrir o replay agora</a>`; }
+      catch { const n = $('#wnote', root); if (n) n.innerHTML = `Sessão encerrada. Preparando o replay${polls > 1 ? ` (verificação ${polls})` : ''}… costuma levar alguns minutos.`; }
     };
     const poll = setInterval(check, 45000); check();
     o.cleanup = () => { clearInterval(poll); clearInterval(iv); };
