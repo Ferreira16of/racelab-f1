@@ -146,6 +146,15 @@
   const FB_SIZE = '29218'; // tamanho da imagem genérica devolvida quando a foto não existe
   const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
   /** pilotos aposentados / sem foto oficial: banco de imagens esportivo (TheSportsDB), conferindo a data de nascimento */
+  /** arquivo de pilotos do site oficial da F1 (cobre muitos pilotos recentes que já saíram do grid) */
+  GW.f1ArchivePhoto = async (d) => {
+    const clean = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z ]/g, '').trim();
+    const first = clean(d.givenName).split(' ')[0], last = clean(d.familyName).replace(/\s+/g, '_');
+    if (!first || !last) return null;
+    const code = (first.slice(0, 3) + last.replace(/_/g, '').slice(0, 3)).toUpperCase() + '01';
+    const u = `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${first[0].toUpperCase()}/${code}_${first}_${last}/${code.toLowerCase()}.png.transform/1col/image.png`;
+    try { const r = await fetch(u, { method: 'HEAD' }); return r.ok && +r.headers.get('content-length') > 2500 ? u : null; } catch { return null; }
+  };
   let STATIC = null;
   GW.archivePhoto = async (d) => {
     STATIC = STATIC || fetch('data/driver-photos.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
@@ -172,6 +181,7 @@
           try { const r = await fetch(u, { method: 'HEAD' }); if (r.ok && r.headers.get('content-length') !== FB_SIZE && +r.headers.get('content-length') > 5000) { url = u; break; } } catch { /* tenta o próximo */ }
         }
       }
+      if (!url) url = await GW.f1ArchivePhoto(d);
       if (!url) { url = await GW.archivePhoto(d); if (url === undefined) { delete PHC[key]; return null; } }
       GW.store.set(ck, url || '');
       return url;
