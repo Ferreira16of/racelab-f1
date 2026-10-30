@@ -66,14 +66,14 @@
     if (!GW.alive(tk)) return;
     const leader = ds?.rows[0], second = ds?.rows[1];
     const maxPts = +ds?.rows[0]?.points || 1, maxC = +cs?.rows[0]?.points || 1;
-    const nextSess = wk.find((s) => s.status !== 'done');
+    const liveS = wk.find((s) => s.status === 'live'), nextSess = wk.find((s) => s.status === 'future');
     el.innerHTML = `
     <section class="hero">
       <span class="eyebrow">Temporada ${y} · ${ds ? `após ${ds.round} de ${sched.length} etapas` : ''}</span>
       ${nextR ? `<h1>${esc(nextR.raceName)}</h1>
         <div class="meta-row"><span class="chip ${next.s === 'live' ? 'live' : 'next'}">${next.s === 'live' ? 'Fim de semana em andamento' : 'Próximo GP'}</span><span class="chip">R${nextR.round}</span><span class="chip">${esc(nextR.Circuit.circuitName)}</span><span class="chip">${esc(nextR.Circuit.Location.locality)}, ${esc(nextR.Circuit.Location.country)}</span></div>
-        ${nextSess ? `<div class="tx2">${esc(nextSess.name)} · ${esc(fmtDT(nextSess.start))} (${U.tz})</div><div class="countdown" id="cd" aria-live="off"></div>` : ''}
-        <div class="row"><a class="btn pri" href="#/seasons/${y}/${nextR.round}">${GW.ic('cal')} Ver fim de semana</a><a class="btn" href="#/circuits/${nextR.Circuit.circuitId}">${GW.ic('map')} Circuito</a></div>`
+        ${liveS ? `<div class="live-now"><div class="row"><span class="chip live"><i class="livedot"></i> AO VIVO</span><b>${esc(liveS.name)}</b></div><div class="lbar" aria-hidden="true"><i id="lprog"></i></div><div class="lmeta"><span>Começou às ${esc(liveS.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))}</span><span>Termina em <b id="lrem">—</b></span></div>${nextSess ? `<div class="tx2">A seguir: ${esc(nextSess.name)} · ${esc(fmtDT(nextSess.start))} (${U.tz})</div>` : ''}</div>` : nextSess ? `<div class="tx2">${esc(nextSess.name)} · ${esc(fmtDT(nextSess.start))} (${U.tz})</div><div class="countdown" id="cd" aria-live="off"></div>` : ''}
+        <div class="row">${liveS ? `<a class="btn pri" href="#/live">${GW.ic('play')} Acompanhar ao vivo</a>` : ''}<a class="btn ${liveS ? '' : 'pri'}" href="#/seasons/${y}/${nextR.round}">${GW.ic('cal')} Ver fim de semana</a><a class="btn" href="#/circuits/${nextR.Circuit.circuitId}">${GW.ic('map')} Circuito</a></div>`
       : `<h1>Temporada ${y} encerrada</h1><p class="sub">Todas as etapas do calendário já foram disputadas. Última etapa: ${esc(lastDone?.r.raceName || '')}.</p>`}
     </section>
     <div class="grid g-main mt">
@@ -103,11 +103,14 @@
     </div>
     <div class="card-h mt"><h2>Calendário ${y}</h2><a class="btn sm" href="#/seasons/${y}">Ver completo</a></div>
     <div class="cal">${st.map(({ r, s }) => `<a class="race-card ${s} ${r === nextR ? 'next' : ''}" href="#/seasons/${y}/${r.round}"><div class="rd"><span>R${r.round}</span><span>${esc(fmtDay(toDate(r.date)))}</span></div><h3>${esc(r.raceName.replace(' Grand Prix', ' GP'))}</h3><div class="loc">${esc(r.Circuit.Location.locality)}, ${esc(r.Circuit.Location.country)}</div><div>${s === 'done' ? '<span class="chip">concluída</span>' : r === nextR ? '<span class="chip next">próxima</span>' : '<span class="chip">futura</span>'}${r.Sprint ? ' <span class="chip red">sprint</span>' : ''}</div></a>`).join('')}</div>`;
-    if (nextSess) {
-      const tick = () => { const c = $('#cd'); if (!c) return; let s = Math.max(0, (+nextSess.start - Date.now()) / 1000); const d = Math.floor(s / 86400); s -= d * 86400; const h = Math.floor(s / 3600); s -= h * 3600; const m = Math.floor(s / 60); c.innerHTML = [['dias', d], ['horas', h], ['min', m], ['seg', Math.floor(s - m * 60)]].map(([k, v]) => `<div><b>${String(v).padStart(2, '0')}</b><span>${k}</span></div>`).join(''); };
-      tick(); const iv = setInterval(tick, 1000);
-      GW.go; (el._cd = iv);
-      var stop = () => clearInterval(iv);
+    let stop;
+    if (liveS || nextSess) {
+      const hms = (ms) => { const t = Math.max(0, Math.round(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60); return `${h ? h + ':' + String(m).padStart(2, '0') : m}:${String(t % 60).padStart(2, '0')}`; };
+      const tick = () => {
+        if (liveS) { const r = $('#lrem'), p = $('#lprog'); if (!r) return; const now = Date.now(); r.textContent = hms(+liveS.end - now); if (p) p.style.width = Math.min(100, Math.max(0, ((now - +liveS.start) / (+liveS.end - +liveS.start)) * 100)) + '%'; if (now > +liveS.end) { clearInterval(iv); GW.reload(); } return; }
+        const c = $('#cd'); if (!c) return; let t = Math.max(0, (+nextSess.start - Date.now()) / 1000); if (t <= 0) { clearInterval(iv); GW.reload(); return; } const d = Math.floor(t / 86400); t -= d * 86400; const h = Math.floor(t / 3600); t -= h * 3600; const m = Math.floor(t / 60); c.innerHTML = [['dias', d], ['horas', h], ['min', m], ['seg', Math.floor(t - m * 60)]].map(([k, v]) => `<div><b>${String(v).padStart(2, '0')}</b><span>${k}</span></div>`).join('');
+      };
+      tick(); const iv = setInterval(tick, 1000); stop = () => clearInterval(iv);
     }
     // destaques (carregamento progressivo)
     GW.seasonData(y).then((sd) => {

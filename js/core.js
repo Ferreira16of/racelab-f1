@@ -166,7 +166,7 @@
   };
 
   /* ---------- router ---------- */
-  const NAV = [['home', 'Home', 'home'], ['seasons', 'Temporadas', 'cal'], ['results', 'Resultados', 'flag'], ['drivers', 'Pilotos', 'user'], ['teams', 'Equipes', 'users'], ['championships', 'Campeonatos', 'trophy'], ['telemetry', 'Telemetry Lab', 'pulse'], ['strategy', 'Strategy Lab', 'timer'], ['circuits', 'Circuit Explorer', 'map'], ['wars', 'Driver Wars', 'swords']];
+  const NAV = [['home', 'Home', 'home'], ['seasons', 'Temporadas', 'cal'], ['results', 'Resultados', 'flag'], ['drivers', 'Pilotos', 'user'], ['teams', 'Equipes', 'users'], ['championships', 'Campeonatos', 'trophy'], ['telemetry', 'Telemetry Lab', 'pulse'], ['strategy', 'Strategy Lab', 'timer'], ['circuits', 'Circuit Explorer', 'map'], ['wars', 'Driver Wars', 'swords'], ['live', 'Ao Vivo', 'play']];
   let token = 0, cleanup = null;
   GW.alive = (t) => t === token;
   GW.go = (path) => { location.hash = '#/' + path.replace(/^#?\/?/, ''); };

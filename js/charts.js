@@ -144,7 +144,7 @@
     else { svg += `<path d="M${P.map((p) => X(p) + ' ' + Y(p)).join('L')}" fill="none" stroke="#1b2235" stroke-width="${sw * 2.6}" stroke-linejoin="round" stroke-linecap="round"/>`; for (let i = 0; i < P.length - 1; i++) svg += `<line x1="${X(P[i])}" y1="${Y(P[i])}" x2="${X(P[i + 1])}" y2="${Y(P[i + 1])}" stroke="${o.colors[i] || '#888'}" stroke-width="${sw * 1.3}" stroke-linecap="round"/>`; }
     (o.corners || []).forEach((c) => { const p = T(c.x, c.y); svg += `<g><circle cx="${X(p)}" cy="${Y(p)}" r="${sw * 1.7}" fill="#0b0e17" stroke="#66708a" stroke-width="${sw * 0.18}"/><text x="${X(p)}" y="${(+Y(p) + sw * 0.62).toFixed(1)}" text-anchor="middle" style="font:700 ${(sw * 1.8).toFixed(1)}px var(--mono);fill:#cfd6e8">${c.n}</text></g>`; });
     (o.markers || []).forEach((c) => { const p = T(c.x, c.y); svg += `<g><circle cx="${X(p)}" cy="${Y(p)}" r="${sw * 1.5}" fill="${c.color}" stroke="#07090f" stroke-width="${sw * 0.4}"/>${c.flag ? `<path d="M${X(p) - sw * 1.1} ${Y(p) - sw * 1.1}h${sw * 1.1}v${sw * 1.1}h-${sw * 1.1}zM${+X(p)} ${+Y(p)}h${sw * 1.1}v${sw * 1.1}h-${sw * 1.1}z" fill="#07090f"/>` : ''}${c.label ? `<text x="${+X(p)}" y="${+Y(p) - sw * 2.6}" text-anchor="middle" style="font:700 ${(sw * 1.9).toFixed(1)}px var(--mono);fill:#fff;stroke:#07090f;stroke-width:${(sw * 0.7).toFixed(1)}px;paint-order:stroke;stroke-linejoin:round">${esc(c.label)}</text>` : ''}</g>`; });
-    svg += `<g id="hov"></g></svg>`;
+    svg += `<g id="hov"></g><g id="live"></g></svg>`;
     el.innerHTML = svg;
     const hov = el.querySelector('#hov'), svgEl = el.querySelector('svg');
     if (o.onMove) {
@@ -153,6 +153,7 @@
       svgEl.addEventListener('pointermove', (e) => { const i = near(e); hov.innerHTML = i == null ? '' : `<circle cx="${X(P[i])}" cy="${Y(P[i])}" r="${sw * 2}" fill="#fff" stroke="#e10600" stroke-width="${sw * 0.5}"/>`; o.onMove(i, e); });
       svgEl.addEventListener('pointerleave', () => { hov.innerHTML = ''; o.onMove(null); });
     }
-    return { setIdx(i) { hov.innerHTML = i == null || !P[i] ? '' : `<circle cx="${X(P[i])}" cy="${Y(P[i])}" r="${sw * 2}" fill="#fff" stroke="#e10600" stroke-width="${sw * 0.5}"/>`; }, svgEl };
+    const live = el.querySelector('#live');
+    return { sw, live, vb: [0, 0, vw, vh], project: (x, y) => { const q = T(x, y); return [+X(q), +Y(q)]; }, setIdx(i) { hov.innerHTML = i == null || !P[i] ? '' : `<circle cx="${X(P[i])}" cy="${Y(P[i])}" r="${sw * 2}" fill="#fff" stroke="#e10600" stroke-width="${sw * 0.5}"/>`; }, svgEl };
   };
 })();
