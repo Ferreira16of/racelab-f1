@@ -155,11 +155,16 @@
     const u = `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${first[0].toUpperCase()}/${code}_${first}_${last}/${code.toLowerCase()}.png.transform/1col/image.png`;
     try { const r = await fetch(u, { method: 'HEAD' }); return r.ok && +r.headers.get('content-length') > 2500 ? u : null; } catch { return null; }
   };
+  /** testa se uma imagem existe (sem depender de CORS) */
+  const imgOk = (u) => new Promise((res) => { const i = new Image(); i.onload = () => res(true); i.onerror = () => res(false); i.src = u; });
+  GW.statsf1Photo = async (d) => { const u = `https://www.statsf1.com/pilotes/photos/${d.driverId}.png`; return (await imgOk(u)) ? u : null; };
   let STATIC = null;
   GW.archivePhoto = async (d) => {
     STATIC = STATIC || fetch('data/driver-photos.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
     const known = (await STATIC)[d.driverId]; // pré-carregado: resposta instantânea, sem limite de consultas
-    if (known !== undefined) return known || null;
+    if (known) return known;
+    const sf = await GW.statsf1Photo(d); if (sf) return sf; // arquivo histórico (statsf1), sem limite de consultas
+    if (known !== undefined) return null;
     try {
       const q = encodeURIComponent(`${d.givenName} ${d.familyName}`.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().replace(/\s+/g, '_'));
       const r = await GW.http(`https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=${q}`, { ttl: 365 * DAY, persist: true });
