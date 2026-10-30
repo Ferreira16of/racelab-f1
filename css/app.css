@@ -270,3 +270,7 @@ footer a { color: var(--tx-2); text-decoration: underline; text-underline-offset
 #installBtn[hidden] { display: none; } #installBtn { background: var(--red); border-color: var(--red); color: #fff; flex-shrink: 0; }
 @media (max-width: 1260px) { #installBtn:not([hidden]) { margin-left: auto; } .burger { margin-left: 0; } }
 @media (display-mode: standalone) { body { overscroll-behavior-y: none; } }
+
+.flag { height: 14px; width: auto; border-radius: 2px; vertical-align: -2px; margin-right: 5px; box-shadow: 0 0 0 1px rgba(255,255,255,.12); }
+.avatar.photo { background-size: cover; background-position: center top; background-color: #1a2236; font-size: 0; }
+td a { text-decoration: underline; text-decoration-color: rgba(255,255,255,.18); text-underline-offset: 3px; } td a:hover { text-decoration-color: var(--red-2); }

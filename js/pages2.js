@@ -43,13 +43,14 @@
     const years = await J.seasons(); const y = +p[0] || GW.ctx.year || GW.currentYear; GW.setCtx({ year: y });
     const [ds, st] = await Promise.all([J.drivers(y), J.driverStandings(y).catch(() => ({ rows: [] }))]); if (!GW.alive(tk)) return;
     const tm = new Map(st.rows.map((r) => [r.Driver.driverId, r]));
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Pilotos</span><h1>Grid ${y}</h1><p class="sub">${ds.length} pilotos com participação registrada em ${y}.</p></div>
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Pilotos</span><h1>Grid ${y}</h1><p class="sub">${tm.size || ds.length} pilotos com participação registrada em ${y}.</p></div>
       <div class="row">${GW.ctl('dy', 'Temporada', GW.options(years.map((v) => [v, v]), y))}<div class="ctl"><label for="dq">Buscar</label><input id="dq" type="search" placeholder="Nome ou sigla"></div><div class="ctl"><label for="df">Mostrar</label><select id="df"><option value="all">Todos</option><option value="fav">Favoritos</option></select></div></div></div><div class="list-grid" id="dl"></div>`;
     $('#dy', el).onchange = (e) => GW.go(`drivers/${e.target.value}`);
     const draw = () => {
       const q = $('#dq', el).value.toLowerCase(), f = $('#df', el).value === 'fav' ? favs() : null;
-      const rows = ds.filter((d) => (GW.fullName(d) + (d.code || '')).toLowerCase().includes(q) && (!f || f.includes(d.driverId))).map((d) => ({ d, s: tm.get(d.driverId) })).sort((a, b) => (a.s ? +a.s.position : 99) - (b.s ? +b.s.position : 99));
-      $('#dl', el).innerHTML = rows.length ? rows.map(({ d, s }) => { const c = s?.Constructors[0]; return `<a class="pcard" href="#/drivers/${y}/${d.driverId}" style="border-left-color:${c ? tc(c.constructorId, c.name) : '#444'}"><div class="avatar">${esc((d.code || d.familyName.slice(0, 3)).toUpperCase())}</div><div style="min-width:0"><h3>${GW.flag(d.nationality)} ${esc(GW.fullName(d))}</h3><p>${d.permanentNumber ? '#' + esc(d.permanentNumber) + ' · ' : ''}${esc(c?.name || 'equipe n/d')}</p><p>${s ? `${s.position}º · ${GW.pts(s.points)} pts · ${s.wins} vit.` : ''}</p></div></a>`; }).join('') : GW.empty('Nenhum piloto', 'Ajuste a busca ou o filtro de favoritos.');
+      const rows = ds.filter((d) => (!tm.size || tm.has(d.driverId)) && (GW.fullName(d) + (d.code || '')).toLowerCase().includes(q) && (!f || f.includes(d.driverId))).map((d) => ({ d, s: tm.get(d.driverId) })).sort((a, b) => (a.s ? +a.s.position : 99) - (b.s ? +b.s.position : 99));
+      $('#dl', el).innerHTML = rows.length ? rows.map(({ d, s }) => { const c = s?.Constructors[0]; return `<a class="pcard" href="#/drivers/${y}/${d.driverId}" style="border-left-color:${c ? tc(c.constructorId, c.name) : '#444'}"><div class="avatar" data-code="${esc(d.code || '')}" data-family="${esc(d.familyName)}">${esc((d.code || d.familyName.slice(0, 3)).toUpperCase())}</div><div style="min-width:0"><h3>${GW.flag(d.nationality)} ${esc(GW.fullName(d))}</h3><p>${d.permanentNumber ? '#' + esc(d.permanentNumber) + ' · ' : ''}${esc(c?.name || 'equipe n/d')}</p><p>${s ? `${s.position}º · ${GW.pts(s.points)} pts · ${s.wins} vit.` : ''}</p></div></a>`; }).join('') : GW.empty('Nenhum piloto', 'Ajuste a busca ou o filtro de favoritos.');
+      GW.hydratePhotos($('#dl', el));
     };
     $('#dq', el).oninput = U.debounce(draw, 120); $('#df', el).onchange = draw; draw();
   };
@@ -57,21 +58,21 @@
   async function profile(y, id, el, tk) {
     const dd = await J.driver(id); if (!GW.alive(tk)) return;
     if (!dd) { el.innerHTML = GW.empty('Piloto não encontrado'); return; }
-    el.innerHTML = `<div class="page-head"><div class="row" style="flex-wrap:nowrap"><div class="avatar" style="width:72px;height:72px;font-size:20px">${esc(dd.code || dd.familyName.slice(0, 3).toUpperCase())}</div><div><span class="eyebrow">Piloto</span><h1>${esc(GW.fullName(dd))}</h1></div></div></div>${GW.loading('Carregando a carreira completa…')}`;
-    GW.wiki(dd.url);
+    el.innerHTML = `<div class="page-head"><div class="row" style="flex-wrap:nowrap"><div class="avatar" data-code="${esc(dd.code || '')}" data-family="${esc(dd.familyName)}" style="width:84px;height:84px;font-size:20px">${esc(dd.code || dd.familyName.slice(0, 3).toUpperCase())}</div><div><span class="eyebrow">Piloto</span><h1>${esc(GW.fullName(dd))}</h1></div></div></div>${GW.loading('Carregando a carreira completa…')}`;
+    GW.wiki(dd.url); GW.hydratePhotos(el);
     const car = await GW.career(id); if (!GW.alive(tk)) return;
     if (!car.seasons.length) { el.innerHTML = GW.empty('Sem temporadas registradas', 'Este piloto não tem classificação de campeonato registrada.'); return; }
     const d = car.driver; const yrs = car.seasons.map((s) => s.year); if (!yrs.includes(y)) y = yrs[yrs.length - 1];
     GW.setCtx({ year: y, drivers: [id] });
     const isFav = favs().includes(id);
-    el.innerHTML = `<div class="page-head"><div class="row" style="flex-wrap:nowrap"><div class="avatar" style="width:72px;height:72px;font-size:20px;border-color:${tc(car.seasons.find((s) => s.year === y)?.teams[0]?.constructorId, car.seasons.find((s) => s.year === y)?.teams[0]?.name)}">${esc(d.code || d.familyName.slice(0, 3).toUpperCase())}</div><div><span class="eyebrow">Piloto${d.permanentNumber ? ' · #' + esc(d.permanentNumber) : ''}</span><h1>${esc(GW.fullName(d))}</h1><p class="sub">${GW.flag(d.nationality)} ${esc(d.nationality)} · nascido em ${esc(new Date(d.dateOfBirth + 'T12:00:00Z').toLocaleDateString('pt-BR', { dateStyle: 'long' }))} </p></div></div>
+    el.innerHTML = `<div class="page-head"><div class="row" style="flex-wrap:nowrap"><div class="avatar" data-code="${esc(d.code || '')}" data-family="${esc(d.familyName)}" style="width:84px;height:84px;font-size:20px;border-color:${tc(car.seasons.find((s) => s.year === y)?.teams[0]?.constructorId, car.seasons.find((s) => s.year === y)?.teams[0]?.name)}">${esc(d.code || d.familyName.slice(0, 3).toUpperCase())}</div><div><span class="eyebrow">Piloto${d.permanentNumber ? ' · #' + esc(d.permanentNumber) : ''}</span><h1>${esc(GW.fullName(d))}</h1><p class="sub">${GW.flag(d.nationality)} ${esc(d.nationality)} · nascido em ${esc(new Date(d.dateOfBirth + 'T12:00:00Z').toLocaleDateString('pt-BR', { dateStyle: 'long' }))} </p></div></div>
       <div class="row"><button class="fav ${isFav ? 'on' : ''}" id="fav" title="Favoritar" aria-label="Favoritar piloto" aria-pressed="${isFav}">${GW.ic('star')}</button>${GW.ctl('py', 'Temporada', GW.options([...yrs].reverse().map((v) => [v, v]), y))}<a class="btn" href="#/wars">${GW.ic('swords')} Driver Wars</a></div></div>
     <p class="note" style="margin-bottom:12px">${GW.ic('info')}<span>"—" significa <b>dado indisponível</b>, nunca zero presumido. Voltas mais rápidas e poles dependem do registro histórico de cada época.</span></p>
     <div class="grid g4">${stat('GPs disputados', car.starts, `${yrs.length} temporadas`)}${stat('Vitórias', car.wins, car.starts ? `${(car.wins / car.starts * 100).toFixed(1)}% das largadas` : '')}${stat('Pódios', car.podiums)}${stat('Poles', car.poles, 'largadas em 1º')}${stat('Voltas mais rápidas', car.fl, car.fl == null ? 'registro desde 2004' : '')}<div class="card" id="s-tit"><div class="stat"><span class="k">Títulos</span><span class="v">…</span><span class="d">calculando</span></div></div><div class="card" id="s-pts"><div class="stat"><span class="k">Pontos na carreira</span><span class="v">…</span><span class="d">calculando</span></div></div><div class="card" id="s-sea"><div class="stat"><span class="k">Temporada ${y}</span><span class="v">…</span><span class="d">calculando</span></div></div></div>
     <div id="wk" class="mt"></div><div class="tabs mt" id="ptabs"><button class="on" data-t="s">Temporada ${y}</button><button data-t="c">Carreira</button><button data-t="k">Por circuito</button></div><div id="pb"></div>`;
     $('#py', el).onchange = (e) => GW.go(`drivers/${e.target.value}/${id}`);
     $('#fav', el).onclick = (e) => { const on = toggleFav(id); e.currentTarget.classList.toggle('on', on); e.currentTarget.setAttribute('aria-pressed', on); GW.toast(on ? 'Adicionado aos favoritos' : 'Removido dos favoritos'); };
-    GW.wikiInto($('#wk', el), d.url, 'Biografia');
+    GW.wikiInto($('#wk', el), d.url, 'Biografia'); GW.hydratePhotos(el);
     const pb = $('#pb', el);
     const tabs = { s: () => tabSeason(pb, y, id, car, tk), c: async () => tabCareer(pb, await GW.careerFull(id)), k: () => tabCircuit(pb, id, tk) };
     const go = async (t) => { $$('#ptabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.t === t)); pb.innerHTML = GW.loading(); try { await tabs[t](); } catch (e) { pb.innerHTML = GW.error(e); } };
