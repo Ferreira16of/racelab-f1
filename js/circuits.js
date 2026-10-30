@@ -92,8 +92,9 @@
     $('#spec', el).insertAdjacentHTML('afterend', `<p class="note mt-s">${GW.ic('info')}<span>Extensão estimada pela geometria do traçado de ${mv._year}; para fins formais, consulte o valor homologado.</span></p>`);
     $('#mapchip', el).innerHTML = ``;
     const corners = mv.corners.map((k) => ({ n: k.number + (k.letter || ''), x: k.trackPosition.x, y: k.trackPosition.y }));
-    const base = { pts, corners, closed: true, rotation: mv.rotation, markers: [{ x: pts[0][0], y: pts[0][1], color: '#2fd48a', label: 'Largada / chegada' }], title: 'Traçado de ' + c.circuitName };
+    const base = { pts, corners, closed: true, rotation: mv.rotation, markers: [{ x: pts[0][0], y: pts[0][1], color: '#fff', flag: true }], title: 'Traçado de ' + c.circuitName };
     GW.trackMap($('#map', el), base);
+    $('#map', el).insertAdjacentHTML('beforeend', '<div class="legend" style="justify-content:center;margin:6px 0 0"><span><i class="dot" style="background:#fff;border:2px solid #07090f;box-shadow:0 0 0 1px #66708a"></i>Largada / chegada</span><span><i class="dot" style="background:#0b0e17;border:1px solid #66708a"></i>Curvas numeradas</span></div>');
     $('#mapx', el).innerHTML = `<div class="row"><button class="btn sm" id="tbtn">${GW.ic('pulse')} Sobrepor volta mais rápida da classificação (setores e velocidade)</button><a class="btn sm" href="#/telemetry/${yr}/${race.round}">${GW.ic('pulse')} Abrir no Telemetry Lab</a></div><div id="tov" class="mt-s"></div>`;
     $('#tbtn', el).onclick = async (e) => {
       e.currentTarget.disabled = true; const out = $('#tov', el); out.innerHTML = GW.loading('Carregando volta da classificação…');
@@ -113,7 +114,7 @@
         const bb = (a) => [Math.min(...a.map((p) => p[0])), Math.max(...a.map((p) => p[0])), Math.min(...a.map((p) => p[1])), Math.max(...a.map((p) => p[1]))];
         const g = bb(pts), l = bb(L.map((r) => [r.x, r.y])), aligned = Math.abs((g[0] + g[1]) / 2 - (l[0] + l[1]) / 2) < (g[1] - g[0]) * 0.1 && Math.abs((g[2] + g[3]) / 2 - (l[2] + l[3]) / 2) < (g[3] - g[2]) * 0.1;
         const idxAt = (sec) => L.reduce((b, r, i) => (Math.abs(r.t - sec) < Math.abs(L[b].t - sec) ? i : b), 0);
-        const s1 = bl.duration_sector_1, s2 = bl.duration_sector_2, mk = [{ x: L[0].x, y: L[0].y, color: '#2fd48a', label: 'S/F' }];
+        const s1 = bl.duration_sector_1, s2 = bl.duration_sector_2, mk = [{ x: L[0].x, y: L[0].y, color: '#fff', flag: true }];
         if (isNum(s1)) { const k = idxAt(s1); mk.push({ x: L[k].x, y: L[k].y, color: '#fff', label: 'S1|S2' }); }
         if (isNum(s1) && isNum(s2)) { const k = idxAt(s1 + s2); mk.push({ x: L[k].x, y: L[k].y, color: '#fff', label: 'S2|S3' }); }
         out.innerHTML = `<div class="legend"><span>Volta mais rápida da classificação ${yr}: <b>${esc(d?.full_name || '#' + bl.driver_number)}</b> — ${lapTime(bl.lap_duration)} (V${bl.lap_number}) · S1 ${lapTime(s1)} · S2 ${lapTime(s2)} · S3 ${lapTime(bl.duration_sector_3)}</span></div><div class="legend"><span><i class="dot" style="background:hsl(240 90% 55%)"></i>${vmin} km/h</span><span><i class="dot" style="background:hsl(0 90% 55%)"></i>${vmax} km/h</span><span></span></div><div id="tmap2"></div><div id="tinfo" class="tx2" style="min-height:22px;font:12px var(--mono)">Passe o cursor sobre o traçado.</div>
