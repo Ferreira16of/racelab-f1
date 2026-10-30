@@ -85,13 +85,14 @@
     const cur = sched.map((r) => ({ r, w: GW.weekend(r) })).find((x) => x.w.some((s) => s.status === 'live'));
     const liveSess = cur && cur.w.find((s) => s.status === 'live');
     const mode = p[0] === 'replay' ? 'replay' : p[0] === 'live' ? 'live' : (liveSess ? 'live' : 'replay');
-    let stage = null, mq = null, tickTimer = 0;
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Acompanhe a corrida</span><h1>${mode === 'live' ? 'Ao vivo' : 'Replay na pista'}</h1><p class="sub">${mode === 'live' ? 'Veja os carros se movendo na pista, com a classificação e as mensagens da direção de prova.' : 'Reveja qualquer sessão disputada: os carros se movem na pista com a classificação, os intervalos e a direção de prova.'}</p></div>
+    let stage = null;
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Acompanhe a corrida</span><h1>${mode === 'live' ? 'Ao vivo' : 'Replay na pista'}</h1><p class="sub">${mode === 'live' ? 'Acompanhe a sessão em andamento e abra o replay na pista assim que os dados forem liberados.' : 'Reveja qualquer sessão disputada: os carros se movem na pista com a classificação, os intervalos e a direção de prova.'}</p></div>
       <div class="seg"><button data-m="live" class="${mode === 'live' ? 'on' : ''}">${liveSess ? '<i class="livedot"></i> ' : ''}Ao vivo</button><button data-m="replay" class="${mode === 'replay' ? 'on' : ''}">Replay</button></div></div><div id="lv-root"></div>`;
     $$('.seg button', el).forEach((b) => (b.onclick = () => GW.go('live/' + b.dataset.m)));
     const root = $('#lv-root', el);
-    (mode === 'live' ? liveMode : replayMode)(root, { y, cur, liveSess, sched, tk, set: (s) => (stage = s) });
-    return () => { if (stage) stage.destroy(); if (mq) { try { mq.end(true); } catch { /* fechado */ } } clearInterval(tickTimer); GW.liveStop && GW.liveStop(); };
+    const o2 = { y, cur, liveSess, sched, tk, set: (s) => (stage = s) };
+    (mode === 'live' ? liveMode : replayMode)(root, o2);
+        return () => { if (stage) stage.destroy(); if (o2.cleanup) o2.cleanup(); };
   };
 
   /* ---------- REPLAY (dados históricos gratuitos, 2023+) ---------- */
@@ -167,69 +168,37 @@
       } catch (e) { if (GW.alive(tk)) box.innerHTML = blocked(e); }
     }
   }
-  const blocked = (e) => /restrict|401|fetch|Failed|Muitas|indispon/i.test(e && e.message ? e.message : '') ? `<div class="state err">${GW.ic('alert')}<h3>Dados indisponíveis agora</h3><p>Enquanto há uma sessão ao vivo, os dados detalhados ficam restritos a assinantes até ela terminar. Tente de novo em instantes ou use o modo "Ao vivo".</p></div>` : GW.error(e);
+  const blocked = (e) => /restrict|401|fetch|Failed|Muitas|indispon/i.test(e && e.message ? e.message : '') ? `<div class="state err">${GW.ic('alert')}<h3>Dados indisponíveis agora</h3><p>Enquanto há uma sessão em andamento, os dados detalhados ficam indisponíveis até ela terminar. Tente de novo em alguns minutos.</p></div>` : GW.error(e);
   // consulta sem cache persistente (janelas grandes de posição)
   O.getRaw = async (path) => { const d = await GW.http(`${OB}/${path}`, { ttl: 30 * 60e3, persist: false }); return Array.isArray(d) ? d : []; };
 
-  /* ---------- AO VIVO (tempo real exige assinatura OpenF1; conexão MQTT direta do navegador) ---------- */
+  /* ---------- AO VIVO (somente fontes gratuitas) ----------
+     Não existe fonte gratuita de posições em tempo real: a OpenF1 libera os dados assim que a sessão termina.
+     Esta tela acompanha a sessão pelo calendário e abre o replay automaticamente quando os dados forem liberados. */
   async function liveMode(root, o) {
-    const { y, cur, liveSess, tk } = o;
+    const { cur, liveSess, tk } = o;
     if (!liveSess) {
       const next = o.sched.map((r) => ({ r, w: GW.weekend(r) })).flatMap((x) => x.w.map((s) => ({ ...s, race: x.r }))).find((s) => s.status === 'future');
       root.innerHTML = `<div class="card"><div class="state">${GW.ic('clock')}<h3>Nenhuma sessão em andamento agora</h3><p>${next ? `A próxima é <b>${esc(next.name)}</b> do ${esc(next.race.raceName)} — ${esc(U.fmtDT(next.start))} (${U.tzShort()}).` : 'A temporada não tem mais sessões no calendário.'}</p><div class="row" style="justify-content:center"><a class="btn pri" href="#/live/replay">${GW.ic('play')} Ver um replay</a></div></div></div>`;
       return;
     }
-    const auth = () => { try { return JSON.parse(localStorage.getItem('gw:of1auth') || sessionStorage.getItem('gw:of1auth') || 'null'); } catch { return null; } };
-    root.innerHTML = `<div class="card"><div class="live-head"><span class="chip live"><i class="livedot"></i> Sessão em andamento</span><b>${esc(liveSess.name)}</b><span class="muted">${esc(cur.r.raceName)} · termina às ${esc(liveSess.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))}</span></div>
-      <div id="lv-gate" class="mt-s"></div></div><div id="lv-stage" class="mt"></div>`;
-    const gate = $('#lv-gate', root);
-    const form = (msg = '') => {
-      const a = auth();
-      gate.innerHTML = `<div class="banner info" style="margin-bottom:12px">Posições em tempo real são um recurso <b>pago</b> da OpenF1 (assinatura). Durante a sessão, a API gratuita fica bloqueada para todos. Entre com a <b>sua</b> conta OpenF1 para ver os carros na pista — ela é usada só neste navegador e enviada apenas à OpenF1.${msg ? `<br><b>${esc(msg)}</b>` : ''}</div>
-        <form id="lv-form" class="row" style="align-items:flex-end"><div class="ctl"><label for="lu">Usuário (e-mail)</label><input id="lu" type="text" autocomplete="username" value="${esc(a ? a.u : '')}" required></div><div class="ctl"><label for="lp">Senha</label><input id="lp" type="text" autocomplete="current-password" style="-webkit-text-security:disc" value="${esc(a ? a.p : '')}" required></div><label class="chip" style="cursor:pointer"><input type="checkbox" id="lr" ${localStorage.getItem('gw:of1auth') ? 'checked' : ''}> lembrar neste navegador</label><button class="btn pri" type="submit">${GW.ic('play')} Conectar</button></form>`;
-      $('#lv-form', gate).onsubmit = (e) => { e.preventDefault(); const u = $('#lu', gate).value.trim(), pw = $('#lp', gate).value, rem = $('#lr', gate).checked; localStorage.removeItem('gw:of1auth'); sessionStorage.removeItem('gw:of1auth'); (rem ? localStorage : sessionStorage).setItem('gw:of1auth', JSON.stringify({ u, p: pw })); connect({ u, p: pw }); };
+    const wk = cur.w;
+    root.innerHTML = `<div class="card live-wait"><div class="live-head"><span class="chip live"><i class="livedot"></i> Sessão em andamento</span><b style="font:700 22px var(--disp)">${esc(liveSess.name)}</b><span class="muted">${esc(cur.r.raceName)}</span></div>
+      <div class="lbar mt-s" aria-hidden="true"><i id="wprog"></i></div><div class="lmeta"><span>Começou às ${esc(liveSess.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))}</span><span>Termina em <b id="wrem">—</b> (${esc(liveSess.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))})</span></div>
+      <div id="wnote" class="banner info mt-s">Os dados de posição dos carros só ficam disponíveis <b>depois que a sessão termina</b> (não há fonte gratuita em tempo real). Assim que forem liberados, o replay desta sessão abre aqui — pode deixar esta página aberta.</div>
+      <div id="wgo" class="mt-s"></div></div>
+      <div class="card mt"><div class="card-h"><h2>Fim de semana</h2><span class="meta">Horários em ${U.tz} (${U.tzShort()})</span></div><div class="sess-list">${wk.map((s) => `<div class="sess ${s.status}"><span class="n">${esc(s.name)}</span><span class="t">${esc(U.fmtDT(s.start))}</span><span class="chip ${s.status === 'live' ? 'live' : s.status === 'future' ? 'next' : ''}">${{ done: 'concluída', live: 'em andamento', future: 'futura' }[s.status]}</span></div>`).join('')}</div></div>`;
+    const hms = (ms) => { const t = Math.max(0, Math.round(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60); return `${h ? h + ':' + String(m).padStart(2, '0') : m}:${String(t % 60).padStart(2, '0')}`; };
+    const iv = setInterval(() => { const r = $('#wrem', root), p = $('#wprog', root); if (!r) return clearInterval(iv); const now = Date.now(); r.textContent = hms(+liveSess.end - now); if (p) p.style.width = Math.min(100, Math.max(0, ((now - +liveSess.start) / (+liveSess.end - +liveSess.start)) * 100)) + '%'; }, 1000);
+    // quando a sessão acaba, verifica de tempos em tempos se a API liberou os dados
+    let polls = 0;
+    const check = async () => {
+      if (!GW.alive(tk)) return clearInterval(poll);
+      if (Date.now() < +liveSess.end) return; polls++;
+      try { const r = await fetch(`${OB}/sessions?session_key=latest`, { cache: 'no-store' }); if (!r.ok) throw new Error('bloqueada'); clearInterval(poll); clearInterval(iv); $('#wnote', root).innerHTML = '<b>Dados liberados!</b> O replay da sessão que acabou de terminar já pode ser aberto.'; $('#wgo', root).innerHTML = `<a class="btn pri" href="#/live/replay">${GW.ic('play')} Abrir o replay agora</a>`; }
+      catch { const n = $('#wnote', root); if (n) n.innerHTML = `Sessão encerrada. Aguardando a liberação dos dados de posição${polls > 1 ? ` (verificação ${polls})` : ''}… costuma levar alguns minutos.`; }
     };
-    form(); if (auth()) connect(auth());
-    async function connect(a) {
-      gate.innerHTML = GW.loading('Conectando à OpenF1…');
-      try {
-        const tr = await fetch(`${OB.replace('/v1', '')}/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ username: a.u, password: a.p }) });
-        if (!tr.ok) throw new Error(tr.status === 401 || tr.status === 400 || tr.status === 422 ? 'Usuário ou senha da OpenF1 não foram aceitos.' : 'Não foi possível autenticar na OpenF1.');
-        const { access_token } = await tr.json();
-        await loadMqtt(); if (!GW.alive(tk)) return;
-        const drivers = await driversFromJolpica(y), feed = new Feed(); let outline = [], rotation = 0, msgs = 0;
-        try { const race = cur.r, m = await O.meetingForRace(race), mv = m && (await GW.MV.circuit(m.circuit_key, y)); if (mv) { outline = mv.x.map((x, i) => [x, mv.y[i]]); rotation = mv.rotation; } } catch { /* usa o traço */ }
-        const client = window.mqtt.connect('wss://mqtt.openf1.org:8084/mqtt', { username: a.u, password: access_token, reconnectPeriod: 4000 });
-        o.mq = client; GW.liveStop = () => { try { client.end(true); } catch { /* fechado */ } };
-        let stage = null, trailT = 0;
-        const start = () => {
-          if (stage) return;
-          if (!outline.length) { const n = [...feed.loc.entries()].sort((p, q) => q[1].length - p[1].length)[0]; if (!n || n[1].length < 60) return; outline = n[1].filter((_, i) => i % 2 === 0).map((p) => [p.x, p.y]); }
-          gate.innerHTML = `<div class="row"><span class="chip live"><i class="livedot"></i> Conectado</span><span class="muted" id="lv-n"></span><span class="sp"></span><button class="btn sm" id="lv-off">Desconectar</button></div>`;
-          $('#lv-off', gate).onclick = () => { GW.liveStop(); GW.go('live/live'); GW.reload(); };
-          const box = $('#lv-stage', root); box.innerHTML = ''; const h = document.createElement('div'); box.appendChild(h);
-          const ctx = { live: true, delay: 2500, drivers, outline, rotation, startT: Date.now(), endT: Infinity };
-          stage = mountStage(h, feed, ctx); o.set(stage); stage.ctl.innerHTML = '<span class="muted" style="font-size:12.5px">Atraso de ~2,5 s para suavizar o movimento. Clique num carro ou na classificação para destacar; "Seguir com zoom" acompanha o piloto.</span>'; stage.state.innerHTML = '<span class="chip live"><i class="livedot"></i> AO VIVO</span>';
-        };
-        client.on('connect', () => { ['location', 'position', 'intervals', 'race_control', 'weather', 'drivers'].forEach((t) => client.subscribe('v1/' + t, { qos: 0 })); });
-        client.on('error', (e) => { if (!stage) form('Falha na conexão: ' + (e && e.message ? e.message : 'verifique sua assinatura.')); });
-        client.on('message', (topic, buf) => {
-          let r; try { r = JSON.parse(buf.toString()); } catch { return; } msgs++;
-          const t = r.date ? ts(r.date) : Date.now(), k = topic.replace('v1/', '');
-          if (k === 'location') feed.addLoc(r.driver_number, t, r.x, r.y);
-          else if (k === 'position') { feed.pos.push({ t, n: r.driver_number, p: r.position }); }
-          else if (k === 'intervals') feed.addInt(r.driver_number, t, r.gap_to_leader, r.interval);
-          else if (k === 'race_control') feed.rc.push({ t, msg: r.message, flag: r.flag, cat: r.category });
-          else if (k === 'weather') feed.wx.push({ t, air: r.air_temperature, track: r.track_temperature, hum: r.humidity, rain: !!r.rainfall });
-          else if (k === 'drivers' && r.driver_number) drivers.set(r.driver_number, { n: r.driver_number, acr: r.name_acronym || String(r.driver_number), name: r.last_name || '', color: colorize(r.team_colour) });
-          if (!stage && msgs % 40 === 0) start();
-          if (stage && Date.now() - trailT > 20000) { trailT = Date.now(); const lim = Date.now() - 120000; feed.loc.forEach((a, n) => { const i = a.findIndex((s) => s.t > lim); if (i > 0) feed.loc.set(n, a.slice(i)); }); }
-          const nEl = $('#lv-n', gate); if (nEl && msgs % 50 === 0) nEl.textContent = `${msgs} atualizações recebidas`;
-        });
-        setTimeout(() => { if (!stage && GW.alive(tk)) form(msgs ? 'Recebendo dados, aguardando posições dos carros…' : 'Conectado, mas sem dados chegando: confira se sua assinatura inclui tempo real.'); }, 20000);
-        start();
-      } catch (e) { if (GW.alive(tk)) form(e.message || 'Erro de conexão.'); }
-    }
-    function loadMqtt() { return window.mqtt ? Promise.resolve() : new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js'; s.onload = res; s.onerror = () => rej(new Error('Não foi possível carregar o cliente de tempo real.')); document.head.appendChild(s); }); }
+    const poll = setInterval(check, 45000); check();
+    o.cleanup = () => { clearInterval(poll); clearInterval(iv); };
   }
 })();
