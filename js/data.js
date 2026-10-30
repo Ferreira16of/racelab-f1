@@ -54,6 +54,17 @@
   J.constructors = async (y) => (await J.raw(`${y}/constructors.json?limit=100`, y)).ConstructorTable.Constructors;
   J.driver = async (id) => (await J.raw(`drivers/${id}.json`)).DriverTable.Drivers[0];
   J.circuits = async (y) => (await J.raw(`${y ? y + '/' : ''}circuits.json?limit=100`, y)).CircuitTable.Circuits;
+  /** circuitos que já receberam ao menos um GP (com contagem e período); exclui pistas só anunciadas */
+  let CIDX = null;
+  J.circuitIndex = () => (CIDX = CIDX || (async () => {
+    const m = new Map(); let off = 0, total = 1;
+    while (off < total) {
+      const d = await J.raw(`races.json?limit=100&offset=${off}`, GW.currentYear); total = +d.total;
+      d.RaceTable.Races.forEach((r) => { if (toDate(r.date, r.time) >= Date.now()) return; const e = m.get(r.Circuit.circuitId) || { n: 0, first: +r.season, last: +r.season }; e.n++; e.first = Math.min(e.first, +r.season); e.last = Math.max(e.last, +r.season); m.set(r.Circuit.circuitId, e); });
+      off += 100;
+    }
+    return m;
+  })().catch((e) => { CIDX = null; throw e; }));
   J.circuitRaces = async (id) => (await J.raw(`circuits/${id}/races.json?limit=100`)).RaceTable.Races;
   J.circuitWinners = async (id) => (await J.raw(`circuits/${id}/results/1.json?limit=100`)).RaceTable.Races;
   J.circuitFastest = async (id) => (await J.raw(`circuits/${id}/fastest/1/results.json?limit=100`)).RaceTable.Races;

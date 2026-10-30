@@ -18,8 +18,8 @@
    * o: { series:[{name,color,pts:[[x,y]],step,area,dash,w}], height, xFmt,yFmt, xLabel,yLabel, unit,
    *      yDomain, xDomain, bands:[{x0,x1,color,label}], zero, group, tipHead(x), tipRow(s,y), noX, onHover(x), legend }
    */
-  GW.lineChart = function (el, o) {
-    const W = 900, H = o.height || 240, m = { l: o.ml || 50, r: 12, t: 10, b: o.noX ? 6 : 26 };
+  function drawLine(el, o, W0) {
+    const W = W0 || 900, H = o.height || 240, m = { l: o.ml || 50, r: 12, t: 10, b: o.noX ? 6 : 26 };
     const S = o.series.filter((s) => s.pts && s.pts.length && !s.hidden);
     el.classList.add('chart');
     if (!S.length) { el.innerHTML = GW.empty('Sem dados', o.emptyMsg || 'Nenhuma série disponível para este gráfico.'); return null; }
@@ -32,7 +32,7 @@
     const xt = niceTicks(x0, x1, W > 500 ? 8 : 5).filter((v) => v >= x0 - 1e-9 && v <= x1 + 1e-9);
     const sx = (x) => m.l + ((x - x0) / (x1 - x0 || 1)) * (W - m.l - m.r), sy = (y) => m.t + (1 - (y - y0) / (y1 - y0 || 1)) * (H - m.t - m.b);
     const yF = o.yFmt || ((v) => +v.toFixed(2)), xF = o.xFmt || ((v) => +v.toFixed(2));
-    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || 'Gráfico')}" preserveAspectRatio="none">`;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || 'Gráfico')}">`;
     (o.bands || []).forEach((b) => { svg += `<rect x="${sx(Math.max(b.x0, x0))}" y="${m.t}" width="${Math.max(0, sx(Math.min(b.x1, x1)) - sx(Math.max(b.x0, x0)))}" height="${H - m.t - m.b}" fill="${b.color}" opacity=".07"/>`; if (b.label) svg += `<text x="${sx(Math.max(b.x0, x0)) + 4}" y="${m.t + 10}">${esc(b.label)}</text>`; });
     yt.forEach((v) => { svg += `<line class="grid-l" x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="#1b2235" stroke-width="1"/><text x="${m.l - 7}" y="${sy(v) + 3.5}" text-anchor="end">${esc(yF(v))}</text>`; });
     if (!o.noX) xt.forEach((v) => { svg += `<line x1="${sx(v)}" x2="${sx(v)}" y1="${H - m.b}" y2="${H - m.b + 4}" stroke="#2a3350"/><text x="${sx(v)}" y="${H - 8}" text-anchor="middle">${esc(xF(v))}</text>`; });
@@ -80,22 +80,35 @@
     hit.addEventListener('pointermove', move); hit.addEventListener('pointerleave', leave); hit.addEventListener('pointerdown', move);
     api.destroy = () => { if (o.group) groups[o.group].delete(api); };
     return api;
-  };
+  }
   GW.clearGroup = (g) => { delete groups[g]; };
+  /** desenha com a largura real do contêiner e redesenha quando ela muda (texto sempre nítido, de celular a monitor grande) */
+  function auto(el, fn, o) {
+    const width = () => Math.round(el.clientWidth || 900);
+    el._chart = { fn, o }; el._cw = width(); el._chart.api = fn(el, o, el._cw);
+    if (window.ResizeObserver && !el._ro) {
+      el._ro = new ResizeObserver(() => { clearTimeout(el._rt); el._rt = setTimeout(() => { if (!el.isConnected || !el._chart) return; const nw = width(); if (nw < 100 || Math.abs(nw - el._cw) < 12) return; el._cw = nw; const ch = el._chart; if (ch.api && ch.api.destroy) ch.api.destroy(); ch.api = ch.fn(el, ch.o, nw); }, 140); });
+      el._ro.observe(el);
+    }
+    return el._chart.api;
+  }
+  GW.lineChart = (el, o) => auto(el, drawLine, o);
+  GW.barChart = (el, o) => auto(el, drawBar, o);
+
 
   /**
    * barChart: {cats:[label], series:[{name,color,vals}], stacked, height, yFmt, unit, horizontal}
    */
-  GW.barChart = function (el, o) {
+  function drawBar(el, o, W0) {
     el.classList.add('chart');
-    const cats = o.cats, S = o.series, W = 900, H = o.height || 240, m = { l: 46, r: 10, t: 10, b: 30 };
+    const cats = o.cats, S = o.series, W = W0 || 900, H = o.height || 240, m = { l: 46, r: 10, t: 10, b: 30 };
     if (!cats.length) { el.innerHTML = GW.empty('Sem dados'); return; }
     let hi = 0, lo = 0;
     cats.forEach((_, i) => { if (o.stacked) { hi = Math.max(hi, S.reduce((a, s) => a + (+s.vals[i] || 0), 0)); } else S.forEach((s) => { if (isNum(s.vals[i])) { hi = Math.max(hi, +s.vals[i]); lo = Math.min(lo, +s.vals[i]); } }); });
     const yt = niceTicks(lo, hi || 1, 4); const y0 = yt[0], y1 = yt[yt.length - 1];
     const sy = (v) => m.t + (1 - (v - y0) / (y1 - y0)) * (H - m.t - m.b), bw = (W - m.l - m.r) / cats.length;
     const yF = o.yFmt || ((v) => v);
-    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || 'Gráfico de barras')}" preserveAspectRatio="none">`;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || 'Gráfico de barras')}">`;
     yt.forEach((v) => { svg += `<line class="grid-l" x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="#1b2235"/><text x="${m.l - 7}" y="${sy(v) + 3.5}" text-anchor="end">${esc(yF(v))}</text>`; });
     const every = Math.ceil(cats.length / Math.floor((W - m.l) / 46));
     cats.forEach((c, i) => {
@@ -112,7 +125,7 @@
     });
     svg += '</svg>';
     el.innerHTML = (S.length > 1 || o.legend ? `<div class="legend">${S.map((s) => `<span><i class="dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '') + svg;
-  };
+  }
 
   /**
    * trackMap: {pts:[[x,y]], colors:[per segment color], corners:[{n,x,y}], markers:[{x,y,color,label}], rotation, height, closed, arrows, onHover(i), width}

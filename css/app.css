@@ -274,3 +274,97 @@ footer a { color: var(--tx-2); text-decoration: underline; text-underline-offset
 .flag { height: 14px; width: auto; border-radius: 2px; vertical-align: -2px; margin-right: 5px; box-shadow: 0 0 0 1px rgba(255,255,255,.12); }
 .avatar.photo { background-size: cover; background-position: center top; background-color: #1a2236; font-size: 0; }
 td a { text-decoration: underline; text-decoration-color: rgba(255,255,255,.18); text-underline-offset: 3px; } td a:hover { text-decoration-color: var(--red-2); }
+
+/* ======================================================================
+   Responsivo v2 — celular, tablet, notebook e monitor grande
+   ====================================================================== */
+/* navegação: tudo cabe sem rolagem; abaixo de 1180px vira menu */
+.nav-links { overflow: visible; gap: 0; margin-left: 10px; justify-content: flex-start; }
+.nav-links a { padding: 8px 9px; font-size: 13px; }
+.nav-links a.on::after { left: 9px; right: 9px; }
+.nav-ctx { display: none; }
+#installBtn .lbl { display: none; }
+#installBtn { padding: 8px 10px; }
+@media (min-width: 1500px) { .nav-ctx { display: flex; } #installBtn .lbl { display: inline; } .nav-links a { padding: 8px 12px; font-size: 13.5px; } .nav-links a.on::after { left: 12px; right: 12px; } }
+@media (min-width: 1181px) { .burger { display: none !important; } .nav-links { position: static !important; flex-direction: row !important; opacity: 1 !important; transform: none !important; pointer-events: auto !important; padding: 0 !important; background: none !important; border: 0 !important; max-height: none !important; } .nav-links a { padding-top: 8px; padding-bottom: 8px; } }
+@media (max-width: 1180px) {
+  .burger { display: inline-flex !important; margin-left: auto; }
+  #installBtn:not([hidden]) { margin-left: auto; } #installBtn:not([hidden]) + .burger { margin-left: 0; }
+  #installBtn .lbl { display: inline; }
+  .nav-links { position: fixed !important; top: var(--nav-h); left: 0; right: 0; bottom: 0; flex-direction: column; background: rgba(7,9,15,.97); backdrop-filter: blur(14px); padding: 14px 16px 28px !important; margin: 0; transform: translateY(-8px); opacity: 0; pointer-events: none; transition: .18s; overflow-y: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 8px; }
+  .nav-links.open { transform: none; opacity: 1; pointer-events: auto; }
+  .nav-links a { padding: 16px 14px; font-size: 15.5px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .nav-links a.on { background: var(--red-dim); border-color: rgba(225,6,0,.5); }
+  .nav-links a.on::after { display: none; }
+}
+@media (max-width: 420px) { .nav-links { grid-template-columns: minmax(0, 1fr); } .logo svg { height: 26px; } .nav-in { gap: 10px; } }
+
+/* telemetria: painéis com respiro entre os gráficos */
+.tel-stack { gap: 16px; }
+.tel-panel { background: #0b0f19; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 8px; margin-bottom: 16px; min-width: 0; }
+.tel-panel .ch-label { margin: 0 0 6px; }
+.tel-panel.axis { padding-bottom: 2px; margin-bottom: 4px; }
+.tel-filters { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.ch-label { font-size: 11px; }
+
+/* duelos (você × companheiro / piloto × piloto) */
+.duel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.duel-card { background: #0b0f19; border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.duel-who { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 700 15px var(--disp); }
+.duel-who .who { display: flex; align-items: center; gap: 10px; min-width: 0; } .duel-who .who.right { flex-direction: row; text-align: right; }
+.duel-who .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duel-who .vs { font: 700 10px var(--mono); letter-spacing: .14em; color: var(--tx-3); border: 1px solid var(--line-2); border-radius: 99px; padding: 3px 8px; flex-shrink: 0; }
+.avatar.sm { width: 44px; height: 44px; font-size: 11px; border-width: 1px; }
+.duel-h { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--tx-2); margin-bottom: 6px; }
+.duel-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 3px; background: transparent; }
+.duel-bar i { display: block; height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.2,.8,.2,1); min-width: 4px; }
+.duel-n { display: flex; justify-content: space-between; margin-top: 4px; font: 700 20px var(--mono); }
+
+/* ---------- tablet ---------- */
+@media (max-width: 1024px) {
+  main { padding: 22px 18px 70px; }
+  .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-head { align-items: flex-start; }
+  .page-head > .row, .page-head > .seg { width: 100%; }
+  .page-head .ctl { flex: 1 1 150px; }
+  .quick { grid-template-columns: repeat(2, 1fr); }
+  .hero { padding: 26px; }
+}
+/* ---------- celular ---------- */
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  main { padding: 16px 14px 64px; }
+  .g2, .g-main, .g-strat, .duel-grid { grid-template-columns: minmax(0, 1fr); }
+  .g3 { grid-template-columns: minmax(0, 1fr); }
+  .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .g4 .card { padding: 14px; } .stat .v { font-size: 22px; }
+  .card { padding: 14px; border-radius: 12px; }
+  .page-head h1 { font-size: 26px; }
+  .page-head .ctl, .page-head .seg { flex: 1 1 100%; }
+  .page-head .seg button { flex: 1; }
+  .hero { padding: 20px 16px; border-radius: 14px; } .hero h1 { font-size: 30px; }
+  .countdown { gap: 6px; } .countdown div { min-width: 0; flex: 1; padding: 8px 4px; } .countdown b { font-size: 20px; }
+  .sess { flex-wrap: wrap; gap: 4px 10px; } .sess .n { flex: 1 1 100%; } 
+  .quick { grid-template-columns: repeat(2, 1fr); gap: 10px; } .quick a { padding: 14px; }
+  .cal { grid-template-columns: minmax(0, 1fr); }
+  .list-grid { grid-template-columns: minmax(0, 1fr); }
+  .bar-row { grid-template-columns: 74px 1fr 46px; gap: 8px; }
+  th, td { padding: 9px 8px; } table { font-size: 12.5px; }
+  .tel-panel { padding: 10px 8px 6px; border-radius: 10px; } .tel-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tel-filters .ctl:nth-child(n) select { font-size: 13px; padding: 9px 8px; }
+  .btn { padding: 10px 12px; } .row { gap: 8px; }
+  .stint-row { grid-template-columns: 44px 1fr; gap: 8px; }
+  .toast { left: 14px; right: 14px; transform: none; text-align: center; }
+  .tabs button { padding: 10px 12px; font-size: 13px; }
+  .wiki img { width: 100%; max-height: 190px; }
+  .duel-card { padding: 14px; } .duel-who { font-size: 14px; }
+}
+@media (max-width: 380px) { .g4 { grid-template-columns: minmax(0, 1fr); } .quick { grid-template-columns: minmax(0, 1fr); } .tel-filters { grid-template-columns: minmax(0, 1fr); } }
+/* ---------- monitor grande ---------- */
+@media (min-width: 1700px) { main, .nav-in { max-width: 1560px; } .cal { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); } }
+@media (min-width: 2200px) { html { font-size: 17px; } main, .nav-in { max-width: 1900px; } }
+/* toque: alvos maiores */
+@media (hover: none) and (pointer: coarse) { select, input[type=number], input[type=text], input[type=search] { min-height: 44px; font-size: 16px; } .btn.sm { min-height: 38px; } .seg button { padding: 9px 14px; } }
+
+.avatar.circ { border-radius: 14px; width: 64px; height: 64px; font: 700 13px var(--mono); color: var(--tx-3); letter-spacing: .06em; background: #0b0f19; } .avatar.circ.geo { padding: 6px; } .avatar.circ svg { width: 100%; height: 100%; }

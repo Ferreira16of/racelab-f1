@@ -29,7 +29,7 @@
     const years = []; for (let y = GW.currentYear; y >= 2023; y--) years.push(y);
     const hist = GW.store.get('telHist', []);
     el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Telemetry Lab</span><h1>Compare voltas, metro a metro</h1><p class="sub">Telemetria real do carro (~4 amostras por segundo). Distância, delta e ganhos por trecho são calculados por integração e interpolação.</p></div></div>
-    <div class="card"><div class="grid g4" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+    <div class="card"><div class="grid tel-filters">
       ${GW.ctl('tY', 'Temporada', GW.options(years.map((y) => [y, y]), st.year))}${GW.ctl('tM', 'Grande Prêmio', '<option>Carregando…</option>')}${GW.ctl('tS', 'Sessão', '<option>—</option>', 'disabled')}
       ${GW.ctl('tA', 'Piloto principal', '<option>—</option>', 'disabled')}${GW.ctl('tLA', 'Volta do piloto principal', '<option>—</option>', 'disabled')}
       ${GW.ctl('tB', 'Piloto para comparar', '<option>—</option>', 'disabled')}${GW.ctl('tLB', 'Volta do comparado', '<option>—</option>', 'disabled')}
@@ -143,15 +143,15 @@
       <div class="grid g-main mt">
         <div class="card"><div class="card-h"><h2>Telemetria sincronizada</h2><span class="meta">Passe o cursor: todos os gráficos e o mapa acompanham</span></div>
           <div class="legend"><span><i class="dot" style="background:${colA}"></i>${esc(nameA)} — ${esc(da?.full_name || '')} · V${la.lap_number}</span>${hasB ? `<span><i class="dot" style="background:${colB}"></i>${esc(nameB)} — ${esc(db?.full_name || '')} · V${lb.lap_number}</span>` : ''}</div>
-          <div class="tel-stack">${active.map(([k, n]) => `<div class="ch-label"><span>${n}${defs[k]?.unit ? ' (' + defs[k].unit + ')' : k === 'time' ? ' (s)' : k === 'delta' ? ' (s)' : ''}</span><span>${GW.chipKind(kind[k])}</span></div><div id="ch-${k}"></div>`).join('')}</div>
-          <div class="ch-label" style="margin-top:2px"><span>Distância percorrida (m) — derivada da integração da velocidade</span><span></span></div><div id="ch-axis"></div>
+          <div class="tel-stack">${active.map(([k, n]) => `<div class="tel-panel"><div class="ch-label"><span>${n}${defs[k]?.unit ? ' (' + defs[k].unit + ')' : k === 'time' ? ' (s)' : k === 'delta' ? ' (s)' : ''}</span></div><div id="ch-${k}"></div></div>`).join('')}</div>
+          <div class="tel-panel axis"><div class="ch-label"><span>Distância percorrida (m)</span></div><div id="ch-axis"></div></div>
           <p class="note mt-s">${GW.ic('info')}<span>Distância = ∫velocidade·dt, normalizada ao comprimento médio das duas voltas (${(Ls / 1000).toFixed(3)} km) para alinhar pontos equivalentes; erro típico de poucos metros. Delta = tempo de B − tempo de A no mesmo ponto: acima de zero, B está atrás. Setores marcados pelos tempos oficiais de setor, mapeados à distância (aproximação). O freio é registrado apenas como ligado/desligado.</span></p></div>
         <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
           <div class="card"><div class="card-h"><h2>Mapa da volta</h2><span class="chip meas">location</span></div><div id="tmap"></div><div class="legend mt-s"><span><i class="dot" style="background:${colA}"></i>${esc(nameA)} mais rápido no trecho</span>${hasB ? `<span><i class="dot" style="background:${colB}"></i>${esc(nameB)} mais rápido</span>` : ''}</div></div>
           <div class="card"><div class="card-h"><h2>Indicadores</h2></div><div id="tsum"></div></div></div></div>
       <div class="grid g2 mt"><div class="card"><div class="card-h"><h2>Diferença por setor</h2>${GW.chipKind('meas')}</div><div id="tsec"></div></div><div class="card"><div class="card-h"><h2>Onde se ganha e se perde tempo</h2>${GW.chipKind('deriv')}</div><div id="tgain"></div></div></div>`;
       active.forEach(([k]) => {
-        const h = k === 'speed' ? 190 : k === 'delta' ? 170 : 110, c = $('#ch-' + k, out), last_ = k === lastKey;
+        const h = k === 'speed' ? 230 : k === 'delta' ? 190 : k === 'time' ? 150 : 130, c = $('#ch-' + k, out), last_ = k === lastKey;
         if (k === 'time') GW.lineChart(c, { ...common, series: [tvA, ...(tvB ? [tvB] : [])], height: h, yFmt: (v) => v.toFixed(0), unit: 's', yMin0: true, tipRow: (s, v) => v.toFixed(3) + ' s', noX: true, title: 'Tempo decorrido' });
         else if (k === 'delta') GW.lineChart(c, { ...common, series: [{ name: `Δ ${nameB} − ${nameA}`, color: '#fff', pts: dser, area: false, w: 2 }], zero: true, height: h, yFmt: (v) => deltaStr(v, 2), tipRow: (s, v) => deltaStr(v, 3) + ' s', title: 'Delta de tempo' });
         else GW.lineChart(c, { ...common, series: defs[k].series, height: h, yFmt: (v) => v, yDomain: k === 'throttle' ? [-3, 103] : k === 'brake' ? [-5, 105] : k === 'gear' ? [0.5, 8.5] : undefined, unit: defs[k].unit, title: defs[k].name, yMin0: k === 'speed' || k === 'rpm' });
