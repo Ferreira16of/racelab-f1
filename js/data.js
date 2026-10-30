@@ -145,6 +145,16 @@
   const TEAM_SLUG = { red_bull: ['redbullracing', 'redbull'], rb: ['racingbulls', 'rb'], alphatauri: ['alphatauri'], aston_martin: ['astonmartin'], haas: ['haasf1team', 'haas'], alpine: ['alpine'], alfa: ['alfaromeo'], sauber: ['kicksauber', 'sauber'], audi: ['audi'], cadillac: ['cadillac'], mercedes: ['mercedes'], ferrari: ['ferrari'], mclaren: ['mclaren'], williams: ['williams'] };
   const FB_SIZE = '29218'; // tamanho da imagem genérica devolvida quando a foto não existe
   const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+  /** pilotos aposentados / sem foto oficial: banco de imagens esportivo (TheSportsDB), conferindo a data de nascimento */
+  GW.archivePhoto = async (d) => {
+    try {
+      const q = encodeURIComponent(`${d.givenName} ${d.familyName}`.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().replace(/\s+/g, '_'));
+      const r = await GW.http(`https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=${q}`, { ttl: 365 * DAY, persist: true });
+      const list = ((r && r.player) || []).filter((x) => x.strSport === 'Motorsport' && (x.strCutout || x.strThumb));
+      const hit = list.find((x) => d.dateOfBirth && x.dateBorn === d.dateOfBirth) || (!d.dateOfBirth && list.length === 1 ? list[0] : null);
+      return hit ? hit.strCutout || hit.strThumb : null;
+    } catch { return undefined; } // erro de rede/limite: não guardar como "sem foto"
+  };
   const PHC = {};
   GW.driverPhoto = (d, year, teamIds) => {
     const key = `${year}:${d.driverId}:${(teamIds || []).join(',')}`;
@@ -158,6 +168,7 @@
           try { const r = await fetch(u, { method: 'HEAD' }); if (r.ok && r.headers.get('content-length') !== FB_SIZE && +r.headers.get('content-length') > 5000) { url = u; break; } } catch { /* tenta o próximo */ }
         }
       }
+      if (!url) { url = await GW.archivePhoto(d); if (url === undefined) { delete PHC[key]; return null; } }
       GW.store.set(ck, url || '');
       return url;
     })());
@@ -165,7 +176,7 @@
   /** preenche os avatares [data-id] do contêiner com a foto do piloto */
   GW.hydratePhotos = (root) => {
     root.querySelectorAll('.avatar[data-id]').forEach(async (a) => {
-      const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family };
+      const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family, dateOfBirth: a.dataset.dob };
       const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean)).catch(() => null);
       if (u && a.isConnected) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = ''; }
     });

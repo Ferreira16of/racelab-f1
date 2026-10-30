@@ -87,7 +87,7 @@
 
   /* ---------- http: cache, in-flight dedupe, throttle, retry ---------- */
   const mem = new Map(), inflight = new Map(), queues = {};
-  const GAP = { 'api.jolpi.ca': 300, 'api.openf1.org': 380, 'api.multiviewer.app': 0 };
+  const GAP = { 'api.jolpi.ca': 300, 'api.openf1.org': 380, 'api.multiviewer.app': 0, 'www.thesportsdb.com': 2300 };
   let active = 0;
   const prog = () => { const b = $('#progress i'); if (!b) return; b.style.opacity = active ? 1 : 0; b.style.width = active ? '70%' : '100%'; if (!active) setTimeout(() => { b.style.width = '0'; }, 300); };
   function lsGet(k) { try { const r = localStorage.getItem('gwc:' + k); return r ? JSON.parse(r) : null; } catch { return null; } }
