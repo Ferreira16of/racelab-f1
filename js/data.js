@@ -129,24 +129,36 @@
   const ISO = { British: 'gb', Dutch: 'nl', Monegasque: 'mc', Spanish: 'es', Australian: 'au', Mexican: 'mx', Thai: 'th', Japanese: 'jp', Canadian: 'ca', French: 'fr', German: 'de', Finnish: 'fi', Danish: 'dk', Chinese: 'cn', Italian: 'it', American: 'us', Brazilian: 'br', 'New Zealander': 'nz', Argentine: 'ar', Argentinian: 'ar', Austrian: 'at', Swiss: 'ch', Belgian: 'be', Swedish: 'se', Polish: 'pl', Russian: 'ru', Venezuelan: 've', Indonesian: 'id', Colombian: 'co', Hungarian: 'hu', Irish: 'ie', Portuguese: 'pt', Uruguayan: 'uy', Chilean: 'cl', Malaysian: 'my', Indian: 'in', Czech: 'cz', Liechtensteiner: 'li', 'South African': 'za', Rhodesian: 'zw', Estonian: 'ee', Monacan: 'mc', 'East German': 'de', Thai2: 'th' };
   /** bandeira como imagem (emoji de bandeira não aparece no Windows) */
   GW.flag = (nat) => (ISO[nat] ? `<img class="flag" src="https://flagcdn.com/w40/${ISO[nat]}.png" srcset="https://flagcdn.com/w80/${ISO[nat]}.png 2x" alt="${GW.util.esc(nat)}" title="${GW.util.esc(nat)}" width="20" height="15" loading="lazy">` : '');
-  /** fotos oficiais dos pilotos (OpenF1 headshot_url), indexadas pela sigla de 3 letras */
-  let PH = null;
-  GW.photoMap = () => (PH = PH || (async () => {
-    const map = new Map(), byLast = new Map();
-    const take = (ds) => ds.forEach((d) => { if (d.headshot_url) { if (!map.has(d.name_acronym)) map.set(d.name_acronym, d.headshot_url); if (d.last_name) byLast.set(d.last_name.toUpperCase(), d.headshot_url); } });
-    for (const y of [GW.currentYear, GW.currentYear - 1]) {
-      try {
-        const ms = (await O.meetings(y)).filter((m) => !m.is_cancelled && new Date(m.date_start) < Date.now()); const m = ms.at(-1); if (!m) continue;
-        const ss = await O.sessions(m.meeting_key); const s = ss.filter((x) => new Date(x.date_start) < Date.now()).at(-1); if (!s) continue;
-        take(await O.drivers(s.session_key));
-      } catch { /* sem fotos desta temporada */ }
-    }
-    return { get: (code, family) => map.get((code || '').toUpperCase()) || (family ? byLast.get(family.toUpperCase()) : null) || null };
-  })());
-  /** coloca a foto nos avatares [data-code] do contêiner */
-  GW.hydratePhotos = async (root) => {
-    const pm = await GW.photoMap().catch(() => null); if (!pm) return;
-    root.querySelectorAll('.avatar[data-code]').forEach((a) => { const u = pm.get(a.dataset.code, a.dataset.family); if (u) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = ''; } });
+  /* ---------- fotos dos pilotos ----------
+     1) foto oficial da temporada (2024+), testando o slug da equipe; 2) foto da Wikipédia; 3) iniciais */
+  const TEAM_SLUG = { red_bull: ['redbullracing', 'redbull'], rb: ['racingbulls', 'rb'], alphatauri: ['alphatauri'], aston_martin: ['astonmartin'], haas: ['haasf1team', 'haas'], alpine: ['alpine'], alfa: ['alfaromeo'], sauber: ['kicksauber', 'sauber'], audi: ['audi'], cadillac: ['cadillac'], mercedes: ['mercedes'], ferrari: ['ferrari'], mclaren: ['mclaren'], williams: ['williams'] };
+  const FB_SIZE = '29218'; // tamanho da imagem genérica devolvida quando a foto não existe
+  const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+  const PHC = {};
+  GW.driverPhoto = (d, year, teamIds, wikiUrl) => {
+    const key = `${year}:${d.driverId}:${(teamIds || []).join(',')}`;
+    return (PHC[key] = PHC[key] || (async () => {
+      const ck = 'ph:' + key, saved = GW.store.get(ck, undefined); if (saved !== undefined && saved !== null) return saved || null;
+      let url = null;
+      if (year >= 2024) {
+        const code = slug((d.givenName || '').split(' ')[0]).slice(0, 3) + slug(d.familyName).slice(0, 3) + '01';
+        for (const id of teamIds || []) for (const t of TEAM_SLUG[id] || []) {
+          const u = `https://media.formula1.com/image/upload/c_fill,w_440/q_auto/d_common:f1:${year}:fallback:driver:${year}fallbackdriverright.webp/v1740000001/common/f1/${year}/${t}/${code}/${year}${t}${code}right.webp`;
+          try { const r = await fetch(u, { method: 'HEAD' }); if (r.ok && r.headers.get('content-length') !== FB_SIZE && +r.headers.get('content-length') > 5000) { url = u; break; } } catch { /* tenta o próximo */ }
+        }
+      }
+      if (!url) { const w = await GW.wiki(wikiUrl || d.url).catch(() => null); url = w && w.thumb ? w.thumb : null; }
+      GW.store.set(ck, url || '');
+      return url;
+    })());
+  };
+  /** preenche os avatares [data-id] do contêiner com a foto do piloto */
+  GW.hydratePhotos = (root) => {
+    root.querySelectorAll('.avatar[data-id]').forEach(async (a) => {
+      const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family, url: a.dataset.wiki };
+      const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean), a.dataset.wiki).catch(() => null);
+      if (u && a.isConnected) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = ''; }
+    });
   };
   GW.finished = (r) => /^(Finished|\+\d+ Laps?)$/.test(r.status || '') || /^\+/.test(r.status || '');
   GW.yearSelect = async (id, sel) => { const ys = await J.seasons(); return GW.ctl(id, 'Temporada', GW.options(ys.map((y) => [y, y]), sel)); };
