@@ -371,3 +371,21 @@ td a { text-decoration: underline; text-decoration-color: rgba(255,255,255,.18);
 tbody tr:has(a[href^="#/"]), .bar-row:has(a[href^="#/"]), .stint-row:has(a[href^="#/"]), .duel-card:has(a[href^="#/"]) { cursor: pointer; }
 .bar-row:has(a[href^="#/"]):hover { background: rgba(255,255,255,.04); border-radius: 8px; }
 .pcard, .race-card, .quick a { cursor: pointer; }
+
+/* seletor de pilotos do Driver Wars */
+.picker { display: flex; flex-direction: column; gap: 14px; }
+.pk-top { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.pk-search { position: relative; flex: 1 1 280px; } .pk-search input { width: 100%; padding: 12px 14px; font-size: 15px; }
+.wres { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 6px); background: #0e1320; border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.6); max-height: 420px; overflow-y: auto; padding: 6px; }
+.wopt { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+.wopt:hover, .wopt.on { background: rgba(255,255,255,.07); } .wopt.none { color: var(--tx-3); cursor: default; justify-content: center; padding: 14px; }
+.wopt .wn { display: flex; flex-direction: column; min-width: 0; flex: 1; } .wopt .wn b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .wopt .wn small { color: var(--tx-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wopt .wadd { font: 700 18px var(--mono); color: var(--red-2); }
+.pk-chips { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-height: 54px; }
+.pk-chip { display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 6px; border-radius: 99px; background: #0b0f19; border: 1px solid var(--c); max-width: 100%; }
+.pk-chip b { font-size: 14px; white-space: nowrap; } .pk-chip small { color: var(--tx-3); font-size: 11.5px; white-space: nowrap; }
+.pk-chip button { background: none; border: 0; color: var(--tx-3); cursor: pointer; border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; flex-shrink: 0; } .pk-chip button:hover { background: var(--red-dim); color: #fff; } .pk-chip button svg { width: 14px; height: 14px; }
+.pk-hint { color: var(--tx-3); font-size: 13px; }
+.pk-presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .pk-lbl { font: 600 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); margin-right: 4px; }
+.pk-presets .chip { cursor: pointer; font-family: var(--sans); font-size: 12.5px; padding: 5px 11px; } .pk-presets .chip:hover { border-color: var(--red); color: var(--tx); }
+@media (max-width: 640px) { .pk-chip small { display: none; } .pk-chip { flex: 1 1 100%; } .wres { max-height: 60vh; position: fixed; left: 12px; right: 12px; top: auto; bottom: 12px; } }

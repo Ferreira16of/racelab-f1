@@ -190,34 +190,69 @@
   /* ---------- DRIVER WARS ---------- */
   GW.pages.wars = async (p, el, tk) => {
     await J.init();
-    const years = await J.seasons(); let mode = GW.store.get('warsMode', 'season');
-    let y = +p[0] || GW.store.get('warsYear', GW.currentYear); let picks = GW.store.get('warsPicks', []);
-    const sd = await GW.seasonQual(y).catch(() => null); if (!GW.alive(tk)) return;
-    const list = sd ? [...sd.drivers.values()].sort((a, b) => b.points - a.points) : [];
-    picks = picks.filter((id) => list.some((e) => e.driver.driverId === id)); if (picks.length < 2) picks = list.slice(0, 2).map((e) => e.driver.driverId);
-    const slots = 4;
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Comparador</span><h1>Driver Wars</h1><p class="sub">Compare indicadores lado a lado. Sem veredito: números isolados raramente contam a história inteira.</p></div>
-      <div class="seg"><button data-m="season" class="${mode === 'season' ? 'on' : ''}">Mesma temporada</button><button data-m="career" class="${mode === 'career' ? 'on' : ''}">Carreira</button></div></div>
-      <div class="card"><div class="row" id="pk">${mode === 'season' ? GW.ctl('wy', 'Temporada', GW.options(years.map((v) => [v, v]), y)) : ''}${Array.from({ length: slots }, (_, i) => `<div class="ctl"><label for="w${i}">Piloto ${i + 1}${i > 1 ? ' (opcional)' : ''}</label><select id="w${i}"></select></div>`).join('')}</div></div><div id="wb" class="mt"></div>`;
+    const years = await J.seasons(); const mode = GW.store.get('warsMode', 'season'), season = mode === 'season';
+    const y = +p[0] || GW.store.get('warsYear', GW.currentYear);
+    const sd = season ? await GW.seasonQual(y).catch(() => null) : null; if (!GW.alive(tk)) return;
+    const MAX = 4, WC = ['#ff3b3b', '#4aa3ff', '#ffb020', '#2fd48a'];
+    /* candidatos: temporada = quem correu no ano; carreira = todos os pilotos da história (carregados aos poucos) */
+    let cands = season && sd ? [...sd.drivers.values()].sort((a, b) => b.points - a.points).map((e) => ({ d: e.driver, teams: [...e.teams.values()], pts: e.points })) : [];
+    let picks = season ? GW.store.get('warsPicks', []).filter((id) => cands.some((c) => c.d.driverId === id)) : GW.store.get('warsCareer', ['hamilton', 'max_verstappen']);
+    if (season && picks.length < 2) picks = cands.slice(0, 2).map((c) => c.d.driverId);
+    const find = (id) => cands.find((c) => c.d.driverId === id);
+    const RIV = [['Hamilton × Verstappen', ['hamilton', 'max_verstappen']], ['Senna × Prost', ['senna', 'prost']], ['Schumacher × Hamilton', ['michael_schumacher', 'hamilton']], ['Vettel × Alonso', ['vettel', 'alonso']], ['Lauda × Hunt', ['lauda', 'hunt']], ['Fangio × Moss', ['fangio', 'moss']]];
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Comparador</span><h1>Driver Wars</h1><p class="sub">Escolha até ${MAX} pilotos e compare lado a lado. Sem veredito: números isolados raramente contam a história inteira.</p></div>
+      <div class="seg"><button data-m="season" class="${season ? 'on' : ''}">Mesma temporada</button><button data-m="career" class="${!season ? 'on' : ''}">Carreira</button></div></div>
+      <div class="card picker"><div class="pk-top">${season ? GW.ctl('wy', 'Temporada', GW.options(years.map((v) => [v, v]), y)) : ''}<div class="ctl pk-search"><label for="wq">Adicionar piloto</label><input id="wq" type="search" autocomplete="off" placeholder="Digite o nome… ex.: Alonso" aria-controls="wres"><div id="wres" class="wres" role="listbox" hidden></div></div></div>
+        <div class="pk-chips" id="chips" aria-live="polite"></div>
+        <div class="pk-presets" id="pre"></div></div><div id="wb" class="mt"></div>`;
     $$('.seg button', el).forEach((b) => (b.onclick = () => { GW.store.set('warsMode', b.dataset.m); GW.reload(); }));
-    const allDrivers = mode === 'career' ? await J.raw('drivers.json?limit=100&offset=0').catch(() => null) : null;
-    const fillSel = (opts) => { for (let i = 0; i < slots; i++) { const s = $('#w' + i, el); s.innerHTML = (i > 1 ? '<option value="">—</option>' : '') + GW.options(opts, picks[i]); if (picks[i]) s.value = picks[i]; } };
-    if (mode === 'season') {
-      fillSel(list.map((e) => [e.driver.driverId, `${GW.fullName(e.driver)} (${GW.pts(e.points)})`]));
-      $('#wy', el).onchange = (e) => { GW.store.set('warsYear', +e.target.value); GW.store.set('warsPicks', []); GW.go(`wars/${e.target.value}`); };
-    } else {
-      // carreira: lista de pilotos de várias temporadas (campeões + grid atual) para busca rápida
-      const pool = new Map(); [...(await Promise.all([GW.currentYear, GW.currentYear - 1, GW.currentYear - 5, GW.currentYear - 10, GW.currentYear - 20, GW.currentYear - 30].map((yy) => J.drivers(yy).catch(() => []))))].flat().forEach((d) => pool.set(d.driverId, d));
-      
-      const opts = [...pool.values()].sort((a, b) => a.familyName.localeCompare(b.familyName)).map((d) => [d.driverId, GW.fullName(d)]);
-      picks = GW.store.get('warsCareer', ['hamilton', 'verstappen']); fillSel(opts);
-    }
-    const run = () => {
-      picks = Array.from({ length: slots }, (_, i) => $('#w' + i, el).value).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
-      GW.store.set(mode === 'season' ? 'warsPicks' : 'warsCareer', picks); GW.setCtx({ drivers: picks });
-      (mode === 'season' ? seasonWar : careerWar)($('#wb', el), picks, sd, y, tk);
+    const wy = $('#wy', el); if (wy) wy.onchange = (e) => { GW.store.set('warsYear', +e.target.value); GW.store.set('warsPicks', []); GW.go(`wars/${e.target.value}`); };
+    const av = (c) => `<div class="avatar sm" data-id="${esc(c.d.driverId)}" data-given="${esc(c.d.givenName)}" data-family="${esc(c.d.familyName)}" data-dob="${esc(c.d.dateOfBirth || '')}" data-year="${season ? y : 0}" data-teams="${(c.teams || []).map((t) => t.constructorId).join(',')}">${esc(c.d.code || c.d.familyName.slice(0, 3).toUpperCase())}</div>`;
+    const stub = (id) => ({ d: { driverId: id, givenName: id.replace(/_/g, ' '), familyName: id.replace(/_/g, ' ') }, teams: [] });
+    const save = () => { GW.store.set(season ? 'warsPicks' : 'warsCareer', picks); GW.setCtx({ drivers: picks }); };
+    const run = () => { save(); drawChips(); drawPresets(); (season ? seasonWar : careerWar)($('#wb', el), picks, sd, y, tk); };
+    const set = (ids) => { picks = ids.filter((id, i, a) => a.indexOf(id) === i).slice(0, MAX); run(); };
+    const closeRes = () => { res.hidden = true; act = -1; };
+    const add = (id) => { if (picks.includes(id)) return GW.toast('Esse piloto já está na comparação'); if (picks.length >= MAX) return GW.toast(`Máximo de ${MAX} pilotos: remova um para adicionar outro`); picks = [...picks, id]; q.value = ''; closeRes(); run(); };
+    const drawChips = () => {
+      $('#chips', el).innerHTML = picks.length ? picks.map((id, i) => { const c = find(id) || stub(id); return `<span class="pk-chip" style="--c:${WC[i]}">${av(c)}<b>${esc(GW.fullName(c.d))}</b>${c.teams && c.teams[0] ? `<small>${esc(c.teams[0].name)}</small>` : ''}<button data-rm="${esc(id)}" aria-label="Remover ${esc(GW.fullName(c.d))}">${GW.ic('x')}</button></span>`; }).join('') + (picks.length < MAX ? `<span class="pk-hint">+ ${MAX - picks.length} vaga${MAX - picks.length > 1 ? 's' : ''}</span>` : '') : '<span class="pk-hint">Nenhum piloto escolhido — use a busca acima.</span>';
+      $$('[data-rm]', el).forEach((b) => (b.onclick = () => { picks = picks.filter((x) => x !== b.dataset.rm); run(); }));
+      GW.hydratePhotos($('#chips', el));
     };
-    for (let i = 0; i < slots; i++) $('#w' + i, el).onchange = run; run();
+    const drawPresets = () => {
+      const teams = new Map(); if (season) cands.forEach((c) => c.teams.forEach((t) => { const e = teams.get(t.constructorId) || { t, ids: [] }; e.ids.push(c.d.driverId); teams.set(t.constructorId, e); }));
+      const mk = (n, ids, extra = '') => `<button class="chip" data-set="${ids.join(',')}" ${extra}>${n}</button>`;
+      $('#pre', el).innerHTML = '<span class="pk-lbl">Atalhos</span>' + (season ? mk('Líder × vice', cands.slice(0, 2).map((c) => c.d.driverId)) + mk('Top 4', cands.slice(0, 4).map((c) => c.d.driverId)) + [...teams.values()].filter((e) => e.ids.length >= 2).slice(0, 12).map((e) => mk(esc(e.t.name), e.ids.slice(0, 2), `style="border-color:${GW.teamColor(e.t.constructorId, e.t.name)}88"`)).join('') : RIV.map(([n, ids]) => mk(n, ids)).join('')) + (picks.length ? mk('Limpar', []) : '');
+      $$('[data-set]', $('#pre', el)).forEach((b) => (b.onclick = () => set(b.dataset.set ? b.dataset.set.split(',') : [])));
+    };
+    /* busca com lista suspensa */
+    const res = $('#wres', el), q = $('#wq', el); let act = -1, shown = [], allLoaded = season;
+    const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const drawRes = () => {
+      const t = norm(q.value.trim());
+      shown = (t ? cands.filter((c) => norm(GW.fullName(c.d) + ' ' + (c.d.code || '') + ' ' + (c.teams[0] ? c.teams[0].name : '')).includes(t)) : cands).filter((c) => !picks.includes(c.d.driverId)).slice(0, 8);
+      res.innerHTML = shown.length ? shown.map((c, i) => `<div class="wopt ${i === act ? 'on' : ''}" role="option" data-i="${i}">${av(c)}<span class="wn"><b>${GW.flag(c.d.nationality)}${esc(GW.fullName(c.d))}</b><small>${season ? esc(c.teams.map((x) => x.name).join(' / ')) + ' · ' + GW.pts(c.pts) + ' pts' : esc(c.d.nationality || '')}</small></span><span class="wadd">+</span></div>`).join('') : `<div class="wopt none">${!allLoaded ? 'Carregando pilotos…' : 'Nenhum piloto encontrado'}</div>`;
+      res.hidden = false; GW.hydratePhotos(res);
+      $$('.wopt[data-i]', res).forEach((o) => (o.onmousedown = (e) => { e.preventDefault(); add(shown[+o.dataset.i].d.driverId); }));
+    };
+    q.addEventListener('focus', drawRes); q.addEventListener('input', () => { act = -1; drawRes(); });
+    q.addEventListener('blur', () => setTimeout(closeRes, 120));
+    q.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (res.hidden) drawRes(); act = (act + (e.key === 'ArrowDown' ? 1 : -1) + shown.length) % (shown.length || 1); drawRes(); }
+      else if (e.key === 'Enter' && shown.length) { e.preventDefault(); add(shown[Math.max(0, act)].d.driverId); }
+      else if (e.key === 'Escape') { closeRes(); q.blur(); }
+    });
+    if (!season) { // todos os pilotos da história, páginas de 100 em segundo plano
+      (async () => {
+        const seen = new Map(); let off = 0, total = 1;
+        while (off < total && GW.alive(tk)) {
+          try { const d = await J.raw(`drivers.json?limit=100&offset=${off}`); total = +d.total; d.DriverTable.Drivers.forEach((x) => seen.set(x.driverId, { d: x, teams: [], pts: 0 })); } catch { break; }
+          off += 100; cands = [...seen.values()].sort((a, b) => a.d.familyName.localeCompare(b.d.familyName)); drawChips(); if (!res.hidden) drawRes();
+        }
+        allLoaded = true; if (GW.alive(tk)) { drawChips(); if (!res.hidden) drawRes(); }
+      })();
+    }
+    drawChips(); drawPresets(); run();
   };
   const WCOL = ['#ff3b3b', '#4aa3ff', '#ffb020', '#2fd48a'];
   function seasonWar(wb, picks, sd, y, tk) {
