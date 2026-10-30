@@ -223,9 +223,15 @@
     const ss = await O.sessions(m.meeting_key); const s = ss.find((x) => names.includes(x.session_name));
     return s ? { m, s } : { err: 'Dados detalhados desta sessão ainda não estão disponíveis.' };
   }
+  /** resultado pré-gerado (melhores voltas e stints): abre na hora e funciona mesmo com sessão ao vivo em andamento */
+  const snapshot = (y, r, ses) => fetch(`data/snap/${y}-${r}-${ses}.json`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
   async function tabTyre(body, y, r, ses, race, tk) {
-    const o = await openf1Session(y, race, ['Race']); if (o.err) { body.innerHTML = GW.empty('Stints indisponíveis', o.err); return; }
-    const [st, dr] = await Promise.all([O.stints(o.s.session_key), O.drivers(o.s.session_key)]); if (!GW.alive(tk)) return;
+    const snap = await snapshot(y, r, 'race');
+    let o, st, dr;
+    if (snap && snap.stints) { o = { m: { meeting_name: snap.meeting } }; st = snap.stints; dr = snap.drivers; }
+    else { o = await openf1Session(y, race, ['Race']); if (o.err) { body.innerHTML = GW.empty('Stints indisponíveis', o.err); return; }
+      [st, dr] = await Promise.all([O.stints(o.s.session_key), O.drivers(o.s.session_key)]); }
+    if (!GW.alive(tk)) return;
     if (!st.length) { body.innerHTML = GW.empty('Sem dados de pneus', 'Não há registro de stints para esta corrida.'); return; }
     const dmap = new Map(dr.map((d) => [d.driver_number, d])); const total = Math.max(...st.map((s) => s.lap_end || 0)); const idOf = await driverLinks(y);
     const by = {}; st.forEach((s) => (by[s.driver_number] = by[s.driver_number] || []).push(s));
@@ -235,14 +241,20 @@
       <p class="note mt-s">${GW.ic('info')}<span>Números = voltas no stint. Pilotos sem registro completo podem ter stints truncados.</span></p></div>`;
   }
   async function tabLaps(body, y, r, ses, race, tk) {
-    const names = OF_NAMES[ses] || { race: ['Race'], qualifying: ['Qualifying'], sprint: ['Sprint'] }[ses];
-    const o = await openf1Session(y, race, names); if (o.err) { body.innerHTML = GW.empty('Voltas indisponíveis', o.err); return; }
-    const [laps, dr] = await Promise.all([O.get('laps', { session_key: o.s.session_key }), O.drivers(o.s.session_key)]); if (!GW.alive(tk)) return;
-    const dmap = new Map(dr.map((d) => [d.driver_number, d])); const best = new Map(); const idOf = await driverLinks(y);
-    laps.forEach((l) => { if (isNum(l.lap_duration) && !l.is_pit_out_lap) { const b = best.get(l.driver_number); if (!b || l.lap_duration < b.lap_duration) best.set(l.driver_number, l); } });
-    const rows = [...best.values()].map((l) => ({ l, d: dmap.get(l.driver_number), n: laps.filter((x) => x.driver_number === l.driver_number).length }));
+    const snap = await snapshot(y, r, ses); let o, rows, bs, idOf = await driverLinks(y);
+    if (snap && snap.rows) { o = { s: { session_name: snap.name, session_key: snap.sk } }; rows = snap.rows.map((x) => ({ ...x })); bs = snap.bs; }
+    else {
+      const names = OF_NAMES[ses] || { race: ['Race'], qualifying: ['Qualifying'], sprint: ['Sprint'] }[ses];
+      o = await openf1Session(y, race, names); if (o.err) { body.innerHTML = GW.empty('Voltas indisponíveis', o.err); return; }
+      const [laps, dr] = await Promise.all([O.get('laps', { session_key: o.s.session_key }), O.drivers(o.s.session_key)]); if (!GW.alive(tk)) return;
+      const dmap = new Map(dr.map((d) => [d.driver_number, d])); const best = new Map();
+      laps.forEach((l) => { if (isNum(l.lap_duration) && !l.is_pit_out_lap) { const b = best.get(l.driver_number); if (!b || l.lap_duration < b.lap_duration) best.set(l.driver_number, l); } });
+      rows = [...best.values()].map((l) => ({ l, d: dmap.get(l.driver_number), n: laps.filter((x) => x.driver_number === l.driver_number).length }));
+      bs = [1, 2, 3].map((i) => Math.min(...laps.filter((l) => isNum(l['duration_sector_' + i])).map((l) => l['duration_sector_' + i])));
+    }
+    if (!GW.alive(tk)) return;
     if (!rows.length) { body.innerHTML = GW.empty('Sem voltas cronometradas', 'Não há voltas cronometradas registradas para esta sessão.'); return; }
-    const fastest = Math.min(...rows.map((x) => x.l.lap_duration)), bs = [1, 2, 3].map((i) => Math.min(...laps.filter((l) => isNum(l['duration_sector_' + i])).map((l) => l['duration_sector_' + i])));
+    const fastest = Math.min(...rows.map((x) => x.l.lap_duration));
     rows.sort((a, b) => a.l.lap_duration - b.l.lap_duration); rows.forEach((x, i) => (x.pos = i + 1));
     const sc = (i) => ({ k: 's' + i, label: 'S' + i, num: true, render: (x) => { const v = x.l['duration_sector_' + i]; return isNum(v) ? `<span class="${v === bs[i - 1] ? 'best' : ''}">${v.toFixed(3)}</span>` : NA; }, sort: (x) => x.l['duration_sector_' + i] });
     body.innerHTML = `<div class="card flush"><div class="card-h" style="padding:14px 18px 0"><h2>Melhor volta por piloto — ${esc(o.s.session_name)}</h2><div>${GW.src('OpenF1')}</div></div><div id="lt"></div></div>
