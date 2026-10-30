@@ -118,6 +118,10 @@
       active++; prog();
       try {
         let err;
+        const LIVE_MSG = 'Os dados detalhados voltam assim que a sessão em andamento terminar.';
+        if (host === 'api.openf1.org' && !hit) { // durante sessão ao vivo a API detalhada fica fechada: nem tenta (evita erro no console)
+          if (Date.now() - (GW._of1Lock || 0) < 60000 || (GW.liveBlock && (await GW.liveBlock()))) { const e = new Error(LIVE_MSG); e.status = 503; throw e; }
+        }
         for (let i = 0; i < 6; i++) {
           try {
             const r = await schedule(host, () => fetch(url, { headers: { Accept: 'application/json' } }));
@@ -130,7 +134,7 @@
             if (persist && JSON.stringify(data).length < 900000) lsSet(url, rec);
             GW.lastUpdate[host] = rec.ts;
             return data;
-          } catch (e) { err = e; if (e.status === 404) break; if (i < 5 && !e.status) { cool(host, 2000 * (i + 1)); await sleep(300); } }
+          } catch (e) { err = e; if (e.status === 404) break; if (host === 'api.openf1.org' && !e.status) { GW._of1Lock = Date.now(); err = new Error(LIVE_MSG); break; } if (i < 5 && !e.status) { cool(host, 2000 * (i + 1)); await sleep(300); } }
         }
         if (hit) { GW.stale = true; return hit.data; } // stale-on-error
         throw err || new Error('Sem conexão. Verifique sua internet e tente de novo.');

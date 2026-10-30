@@ -13,13 +13,10 @@
     return `<svg viewBox="0 0 ${vw.toFixed(0)} ${vh.toFixed(0)}" aria-hidden="true"><path d="M${P.map((p) => `${(p[0] - x0 + pad).toFixed(0)} ${(p[1] - y0 + pad).toFixed(0)}`).join('L')}Z" fill="none" stroke="#e8ecf8" stroke-width="${(s / 22).toFixed(0)}" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   }
   let GEO = null;
-  /** circuitId -> geometria, para os circuitos usados nas últimas temporadas */
+  /** circuitId -> geometria, sem depender da API de sessões (usa a tabela data/circuit-keys.json) */
   const geoMap = () => (GEO = GEO || (async () => {
-    const map = new Map();
-    for (const y of [GW.currentYear, GW.currentYear - 1, GW.currentYear - 2]) {
-      let sched = []; try { sched = await J.schedule(y); } catch { continue; }
-      await Promise.all(sched.filter((r) => !map.has(r.Circuit.circuitId)).map(async (r) => { try { const m = await O.meetingForRace(r); const mv = m && (await GW.MV.circuit(m.circuit_key, y)); if (mv) map.set(r.Circuit.circuitId, mv); } catch { /* sem miniatura */ } }));
-    }
+    const map = new Map(), keys = await fetch('data/circuit-keys.json').then((r) => r.json()).catch(() => ({}));
+    await Promise.all(Object.entries(keys).map(async ([id, key]) => { try { const mv = await GW.MV.circuit(key, GW.currentYear); if (mv) map.set(id, mv); } catch { /* sem miniatura */ } }));
     return map;
   })());
 
@@ -80,7 +77,7 @@
     if (!yr) { $('#map', el).innerHTML = GW.empty('Sem geometria disponível', 'O traçado interativo está disponível para circuitos usados a partir de 2023. Este circuito não foi usado desde então — nenhum desenho genérico é exibido no lugar.'); return; }
     const race = modern.find((r) => +r.season === yr);
     let meeting, mv;
-    try { meeting = await O.meetingForRace(race); mv = meeting && (await GW.MV.circuit(meeting.circuit_key, yr)); } catch (e) { $('#map', el).innerHTML = GW.error(e); return; }
+    try { const keys = await fetch('data/circuit-keys.json').then((r) => r.json()).catch(() => ({})); mv = keys[id] ? await GW.MV.circuit(keys[id], yr) : null; } catch (e) { $('#map', el).innerHTML = GW.error(e); return; }
     if (!GW.alive(tk)) return;
     if (!mv) { $('#map', el).innerHTML = GW.empty('Geometria indisponível', 'O traçado deste circuito ainda não está disponível.'); return; }
     const pts = mv.x.map((x, i) => [x, mv.y[i]]);
@@ -98,7 +95,7 @@
     $('#tbtn', el).onclick = async (e) => {
       e.currentTarget.disabled = true; const out = $('#tov', el); out.innerHTML = GW.loading('Carregando volta da classificação…');
       try {
-        const ss = await O.sessions(meeting.meeting_key), q = ss.find((s) => s.session_name === 'Qualifying'); if (!q) throw new Error('Sessão de classificação não encontrada');
+        meeting = meeting || (await O.meetingForRace(race)); if (!meeting) throw new Error('Dados desta sessão ainda não estão disponíveis'); const ss = await O.sessions(meeting.meeting_key), q = ss.find((s) => s.session_name === 'Qualifying'); if (!q) throw new Error('Sessão de classificação não encontrada');
         const laps = (await O.get('laps', { session_key: q.session_key })).filter((l) => isNum(l.lap_duration) && !l.is_pit_out_lap); if (!laps.length) throw new Error('Sem voltas cronometradas');
         const bl = laps.reduce((b, l) => (l.lap_duration < b.lap_duration ? l : b)), t0 = +new Date(bl.date_start), t1 = t0 + bl.lap_duration * 1000;
         const [cd, loc, drv] = await Promise.all([O.window('car_data', q.session_key, bl.driver_number, t0, t1), O.window('location', q.session_key, bl.driver_number, t0, t1), O.drivers(q.session_key)]);

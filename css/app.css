@@ -410,3 +410,5 @@ tbody tr:has(a[href^="#/"]), .bar-row:has(a[href^="#/"]), .stint-row:has(a[href^
 
 /* fotos em retrato (arquivo histórico): mostrar o rosto inteiro, sem cortar */
 .avatar.photo.contain { background-size: contain; background-repeat: no-repeat; background-position: center bottom; background-color: #1a2236; }
+
+.avatar.photo.fit { background-repeat: no-repeat; background-color: #1a2236; }

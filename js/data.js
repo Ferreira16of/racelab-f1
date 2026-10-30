@@ -92,6 +92,10 @@
   };
   GW.sessionLabel = (k) => ({ FP1: 'TL1', FP2: 'TL2', FP3: 'TL3', SQ: 'SQ', SPRINT: 'Sprint', Q: 'Quali', RACE: 'Corrida' }[k] || k);
 
+  /** há sessão em andamento (ou recém-terminada)? Nesse período a OpenF1 detalhada fica fechada. */
+  GW.liveBlock = async () => {
+    try { const now = Date.now(); return (await J.schedule(GW.currentYear)).some((r) => GW.weekend(r).some((x) => now >= +x.start && now <= +x.end + 3 * 60e3)); } catch { return false; }
+  };
   /* ---------- OpenF1 ---------- */
   const O = (GW.O = {});
   const q = (o) => Object.entries(o).filter(([, v]) => v != null).map(([k, v]) => `${k.replace(/[<>]=?$/, (m) => encodeURIComponent(m))}${/[<>]/.test(k) ? '' : '='}${encodeURIComponent(v)}`).join('&');
@@ -158,6 +162,26 @@
   /** testa se uma imagem existe (sem depender de CORS) */
   const imgOk = (u) => new Promise((res) => { const i = new Image(); i.onload = () => res(true); i.onerror = () => res(false); i.src = u; });
   GW.statsf1Photo = async (d) => { const u = `https://www.statsf1.com/pilotes/photos/${d.driverId}.png`; return (await imgOk(u)) ? u : null; };
+  /** enquadra o rosto: mede a área opaca da imagem (PNG com fundo transparente) e centraliza cabeça e ombros */
+  const FIT = {};
+  GW.fitHead = (u) => (FIT[u] = FIT[u] || new Promise((res) => {
+    const i = new Image(); i.crossOrigin = 'anonymous';
+    i.onload = () => {
+      try {
+        const w = i.naturalWidth, h = i.naturalHeight, k = Math.min(1, 160 / Math.max(w, h)), cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+        const c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(i, 0, 0, cw, ch);
+        const px = x.getImageData(0, 0, cw, ch).data; let x0 = cw, x1 = 0, y0 = ch, y1 = 0;
+        for (let yy = 0; yy < ch; yy++) for (let xx = 0; xx < cw; xx++) if (px[(yy * cw + xx) * 4 + 3] > 40) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; }
+        for (let yy = ch - 1; yy >= 0 && !y1; yy--) for (let xx = 0; xx < cw; xx++) if (px[(yy * cw + xx) * 4 + 3] > 40) { y1 = yy; break; }
+        if (x1 <= x0 || y1 <= y0 || (x1 - x0 > cw * 0.97 && y0 < 2 && y1 > ch - 3)) return res(null); // imagem sem transparência: mantém o corte padrão
+        const bw = x1 - x0 + 1, bh = y1 - y0 + 1, r = bh / bw, s = Math.min(bh, r > 1.6 ? bw * 1.25 : Math.max(bw, bh) * 1.1); // lado do quadrado: cabeça + ombros
+        const cx = (x0 + x1) / 2, top = y0 - s * 0.06, left = cx - s / 2, bgW = cw / s * 100;
+        const dx = 1 - cw / s, dy = 1 - ch / s;
+        res({ size: `${bgW.toFixed(1)}% auto`, pos: `${Math.abs(dx) < 0.02 ? 50 : ((-left / s) / dx * 100).toFixed(1)}% ${Math.abs(dy) < 0.02 ? 0 : ((-top / s) / dy * 100).toFixed(1)}%` });
+      } catch { res(null); }
+    };
+    i.onerror = () => res(null); i.src = u;
+  }));
   let STATIC = null;
   GW.archivePhoto = async (d) => {
     STATIC = STATIC || fetch('data/driver-photos.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
@@ -197,7 +221,12 @@
     root.querySelectorAll('.avatar[data-id]').forEach(async (a) => {
       const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family, dateOfBirth: a.dataset.dob };
       const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean)).catch(() => null);
-      if (u && a.isConnected) { a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); if (/statsf1/.test(u)) a.classList.add('contain'); a.textContent = ''; }
+      if (u && a.isConnected) {
+        a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = '';
+        if (/statsf1/.test(u)) a.classList.add('contain');
+        else if (/thesportsdb\.com.*\/cutout\//.test(u)) { a.classList.add('fit'); a.style.backgroundSize = '210% auto'; a.style.backgroundPosition = '50% 0%'; } // recorte de corpo inteiro: aproxima da cabeça
+        else { const f = await GW.fitHead(u); if (f && a.isConnected) { a.classList.add('fit'); a.style.backgroundSize = f.size; a.style.backgroundPosition = f.pos; } }
+      }
     });
   };
   GW.finished = (r) => /^(Finished|\+\d+ Laps?)$/.test(r.status || '') || /^\+/.test(r.status || '');

@@ -4,10 +4,11 @@
   const { esc, isNum } = GW.util;
   const groups = {};
 
-  function niceTicks(lo, hi, n = 5) {
+  function niceTicks(lo, hi, n = 5, int = false) {
     if (lo === hi) { lo -= 1; hi += 1; }
     const span = hi - lo, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
-    const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+    let step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+    if (int) step = Math.max(1, Math.round(step));
     const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, t = [];
     for (let v = a; v <= b + step / 2; v += step) t.push(+v.toFixed(10));
     return t;
@@ -27,9 +28,9 @@
     S.forEach((s) => s.pts.forEach(([x, y]) => { if (x < x0) x0 = x; if (x > x1) x1 = x; if (isNum(y)) { if (y < y0) y0 = y; if (y > y1) y1 = y; } }));
     if (o.xDomain) [x0, x1] = o.xDomain;
     if (o.yDomain) [y0, y1] = o.yDomain; else { const p = (y1 - y0) * 0.08 || 1; y0 -= p; y1 += p; if (o.zero) { y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); } if (o.yMin0) y0 = Math.max(0, y0); }
-    const yt = niceTicks(y0, y1, Math.max(3, Math.round(H / 55)));
-    if (!o.yDomain) { y0 = yt[0]; y1 = yt[yt.length - 1]; }
-    const xt = niceTicks(x0, x1, W > 500 ? 8 : 5).filter((v) => v >= x0 - 1e-9 && v <= x1 + 1e-9);
+    const rev = y0 > y1, yt = niceTicks(Math.min(y0, y1), Math.max(y0, y1), Math.max(3, Math.round(H / 55)), S.every((s) => s.pts.every((p) => !isNum(p[1]) || Number.isInteger(p[1]))) && Math.abs(y1 - y0) > 4);
+    if (!o.yDomain) { y0 = yt[0]; y1 = yt[yt.length - 1]; } else { const lo_ = Math.min(y0, y1), hi_ = Math.max(y0, y1); for (let i = yt.length - 1; i >= 0; i--) if (yt[i] < lo_ - 1e-9 || yt[i] > hi_ + 1e-9) yt.splice(i, 1); } 
+    const xInt = S.every((s) => s.pts.every((p) => Number.isInteger(p[0]))), xt = niceTicks(x0, x1, W > 500 ? 8 : 5, xInt).filter((v) => v >= x0 - 1e-9 && v <= x1 + 1e-9);
     const sx = (x) => m.l + ((x - x0) / (x1 - x0 || 1)) * (W - m.l - m.r), sy = (y) => m.t + (1 - (y - y0) / (y1 - y0 || 1)) * (H - m.t - m.b);
     const yF = o.yFmt || ((v) => +v.toFixed(2)), xF = o.xFmt || ((v) => +v.toFixed(2));
     let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || 'Gráfico')}">`;
@@ -105,7 +106,7 @@
     if (!cats.length) { el.innerHTML = GW.empty('Sem dados'); return; }
     let hi = 0, lo = 0;
     cats.forEach((_, i) => { if (o.stacked) { hi = Math.max(hi, S.reduce((a, s) => a + (+s.vals[i] || 0), 0)); } else S.forEach((s) => { if (isNum(s.vals[i])) { hi = Math.max(hi, +s.vals[i]); lo = Math.min(lo, +s.vals[i]); } }); });
-    const yt = niceTicks(lo, hi || 1, 4); const y0 = yt[0], y1 = yt[yt.length - 1];
+    const allInt = S.every((s) => s.vals.every((v) => !isNum(v) || Number.isInteger(+v))), yt = niceTicks(lo, hi || 1, 4, allInt); const y0 = yt[0], y1 = yt[yt.length - 1];
     const sy = (v) => m.t + (1 - (v - y0) / (y1 - y0)) * (H - m.t - m.b), bw = (W - m.l - m.r) / cats.length;
     const yF = o.yFmt || ((v) => v);
     let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title || 'Gráfico de barras')}">`;
@@ -116,7 +117,7 @@
       if (i % every === 0) svg += `<text x="${gx + bw / 2}" y="${H - 10}" text-anchor="middle">${esc(c)}</text>`;
       let acc = 0;
       S.forEach((s, j) => {
-        const v = s.vals[i]; if (!isNum(v)) return; const n = o.stacked ? 1 : S.length, w = inner / n;
+        const v = s.vals[i]; if (!isNum(v) || +v === 0) return; const n = o.stacked ? 1 : S.length, w = inner / n;
         const bx = o.stacked ? gx + off : gx + off + j * w;
         const top = o.stacked ? sy(acc + +v) : sy(Math.max(0, +v)), bot = o.stacked ? sy(acc) : sy(Math.min(0, +v));
         svg += `<rect class="b" data-i="${i}" x="${bx}" y="${top}" width="${w - 1}" height="${Math.max(1, bot - top)}" rx="2" fill="${s.color}"><title>${esc(c)} · ${esc(s.name)}: ${esc(yF(+v))}${o.unit ? ' ' + o.unit : ''}</title></rect>`;
