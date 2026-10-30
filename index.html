@@ -3,9 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RaceLab F1 — Análise de Fórmula 1</title>
-<meta name="description" content="RaceLab F1: resultados, telemetria, estratégia, circuitos e comparação de pilotos da Fórmula 1 com dados reais.">
+<title>RaceLab F1 — Resultados, telemetria e análise de Fórmula 1</title>
+<meta name="description" content="Resultados, classificação, telemetria, estratégia de corrida, circuitos e comparação de pilotos da Fórmula 1. Dados reais, replay na pista e análise de voltas.">
+<meta name="keywords" content="fórmula 1, f1, resultados f1, telemetria f1, classificação pilotos, classificação construtores, estratégia de corrida, circuitos f1, comparar pilotos, replay corrida">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="RaceLab F1">
 <meta name="theme-color" content="#07090f">
+<link rel="canonical" href="https://racelab-f1.vercel.app/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="RaceLab F1"><meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="RaceLab F1 — Análise de Fórmula 1"><meta property="og:description" content="Resultados, classificação, telemetria, estratégia de corrida, circuitos e comparação de pilotos da Fórmula 1. Dados reais, replay na pista e análise de voltas.">
+<meta property="og:url" content="https://racelab-f1.vercel.app/"><meta property="og:image" content="https://racelab-f1.vercel.app/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="RaceLab F1">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="RaceLab F1 — Análise de Fórmula 1"><meta name="twitter:description" content="Resultados, classificação, telemetria, estratégia de corrida, circuitos e comparação de pilotos da Fórmula 1. Dados reais, replay na pista e análise de voltas."><meta name="twitter:image" content="https://racelab-f1.vercel.app/og-image.png">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -14,9 +22,13 @@
 <meta name="apple-mobile-web-app-title" content="RaceLab F1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://api.jolpi.ca">
-<link rel="preconnect" href="https://api.openf1.org">
+<link rel="preconnect" href="https://api.jolpi.ca" crossorigin>
+<link rel="preconnect" href="https://api.openf1.org" crossorigin>
+<link rel="dns-prefetch" href="https://media.formula1.com"><link rel="dns-prefetch" href="https://flagcdn.com"><link rel="dns-prefetch" href="https://api.multiviewer.app">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"></noscript>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "RaceLab F1", "url": "https://racelab-f1.vercel.app/", "description": "Resultados, classificação, telemetria, estratégia de corrida, circuitos e comparação de pilotos da Fórmula 1. Dados reais, replay na pista e análise de voltas.", "applicationCategory": "SportsApplication", "operatingSystem": "Any", "inLanguage": "pt-BR", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "BRL"}}</script>
 </head>
 <body>
 <a class="skip" href="#app">Pular para o conteúdo</a>
@@ -39,17 +51,12 @@
     <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="navlinks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </header>
-<main id="app" tabindex="-1"></main>
+<main id="app" tabindex="-1"><noscript><section style="padding:24px"><h1>RaceLab F1</h1><p>Plataforma de análise de Fórmula 1: resultados de corridas e classificações, perfis de pilotos e equipes, Telemetry Lab para comparar voltas, Strategy Lab para simular estratégias de pit stop, Circuit Explorer com o traçado dos circuitos, Driver Wars para comparar pilotos e replay das corridas na pista.</p><p>Ative o JavaScript para usar o aplicativo.</p></section></noscript></main>
 <footer>RaceLab F1 · Horários exibidos em <span id="tzlabel"></span></footer>
-<script src="js/core.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/data.js"></script>
-<script src="js/pages1.js"></script>
-<script src="js/pages2.js"></script>
-<script src="js/telemetry.js"></script>
-<script src="js/strategy.js"></script>
-<script src="js/circuits.js"></script>
-<script src="js/live.js"></script>
+<script defer src="js/core.js"></script>
+<script defer src="js/charts.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/pages1.js"></script>
 <script>
 (function () {
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
