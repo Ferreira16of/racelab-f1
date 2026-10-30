@@ -47,6 +47,9 @@
     })());
   };
 
+  const SES_ROUTE = { FP1: 'fp1', FP2: 'fp2', FP3: 'fp3', SQ: 'sq', SPRINT: 'sprint', Q: 'qualifying', RACE: 'race' };
+  /** link de resultados da sessão, só se ela já aconteceu e há resultado disponível */
+  const sessHref = (y, round, s) => (s.status !== 'future' && (s.kind || (+y >= 2023 && (s.key.startsWith('FP') || s.key === 'SQ'))) ? `#/results/${y}/${round}/${SES_ROUTE[s.key]}` : null);
   /* ---------- HOME ---------- */
   GW.pages.home = async (p, el, tk) => {
     await J.init();
@@ -75,7 +78,7 @@
     </section>
     <div class="grid g-main mt">
       <div class="card"><div class="card-h"><h2>${nextR ? 'Sessões do fim de semana' : 'Última etapa'}</h2><span class="meta">Horários em ${U.tz} (${U.tzShort()})</span></div>
-        ${wk.length ? `<div class="sess-list">${wk.map((s) => `<div class="sess ${s.status}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start))}${s.hasTime ? '' : ' (hora não divulgada)'}</span><span class="chip ${s.status === 'live' ? 'live' : s.status === 'future' ? 'next' : ''}">${{ done: 'concluída', live: 'em andamento', future: 'futura' }[s.status]}</span></div>`).join('')}</div>` : GW.empty('Sem sessões futuras', 'Não há sessões pendentes na temporada.')}
+        ${wk.length ? `<div class="sess-list">${wk.map((s) => { const h = nextR ? sessHref(y, nextR.round, s) : null; return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start))}${s.hasTime ? '' : ' (hora não divulgada)'}</span><span class="chip ${s.status === 'live' ? 'live' : s.status === 'future' ? 'next' : ''}">${{ done: 'concluída', live: 'em andamento', future: 'futura' }[s.status]}</span>${h ? GW.ic('chev') : ''}</${h ? 'a' : 'div'}>`; }).join('')}</div>` : GW.empty('Sem sessões futuras', 'Não há sessões pendentes na temporada.')}
       </div>
       <div class="card"><div class="card-h"><h2>Último GP</h2>${GW.src('Jolpica-F1', GW.cachedAt(`https://api.jolpi.ca/ergast/f1/${y}/${lastDone?.r.round}/results.json?limit=100`))}</div>
         ${lastRes?.rows.length ? `<h3 style="margin-bottom:4px">${esc(lastDone.r.raceName)}</h3><p class="tx2" style="margin-bottom:10px">${esc(fmtDay(toDate(lastDone.r.date)))} · ${esc(lastDone.r.Circuit.circuitName)}</p>
@@ -139,7 +142,7 @@
       const w = GW.weekend(sel), i = sched.indexOf(sel), rc = sel.Circuit, started = w.some((s) => s.status !== 'future');
       $('#detail', el).innerHTML = `<div class="card" style="margin-bottom:20px"><div class="card-h"><div><span class="eyebrow">Etapa ${sel.round} de ${sched.length}</span><h2 style="font-size:24px">${esc(sel.raceName)}</h2><p class="tx2">${esc(rc.circuitName)} · ${esc(rc.Location.locality)}, ${esc(rc.Location.country)}</p></div>
         <div class="row">${i > 0 ? `<a class="btn sm" href="#/seasons/${y}/${sched[i - 1].round}">← ${esc(sched[i - 1].raceName.replace(' Grand Prix', ''))}</a>` : ''}${i < sched.length - 1 ? `<a class="btn sm" href="#/seasons/${y}/${sched[i + 1].round}">${esc(sched[i + 1].raceName.replace(' Grand Prix', ''))} →</a>` : ''}</div></div>
-        <div class="sess-list">${w.map((s) => { const kind = s.kind; const has = s.status === 'done' && (kind || (y >= 2023 && (s.key.startsWith('FP') || s.key === 'SQ'))); const rs = { FP1: 'fp1', FP2: 'fp2', FP3: 'fp3', SQ: 'sq', SPRINT: 'sprint', Q: 'qualifying', RACE: 'race' }[s.key]; return `<div class="sess ${s.status}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start))} ${U.tzShort()}</span>${has ? `<a class="btn sm" href="#/results/${y}/${sel.round}/${rs}">Resultado</a>` : `<span class="chip ${s.status === 'future' ? 'next' : 'live'}">${s.status === 'future' ? 'futura' : 'em andamento'}</span>`}</div>`; }).join('')}</div>
+        <div class="sess-list">${w.map((s) => { const h = sessHref(y, sel.round, s); return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start))} ${U.tzShort()}</span>${h ? `<span class="chip">ver resultado</span>${GW.ic('chev')}` : `<span class="chip ${s.status === 'future' ? 'next' : 'live'}">${s.status === 'future' ? 'futura' : 'em andamento'}</span>`}</${h ? 'a' : 'div'}>`; }).join('')}</div>
         <div class="row mt-s">${started ? `<a class="btn" href="#/results/${y}/${sel.round}">${GW.ic('flag')} Resultados</a>${y >= 2023 ? `<a class="btn" href="#/telemetry/${y}/${sel.round}">${GW.ic('pulse')} Telemetry Lab</a>` : ''}` : '<span class="chip next">Resultados e telemetria são liberados quando o fim de semana começa</span>'}<a class="btn" href="#/circuits/${rc.circuitId}/${y}">${GW.ic('map')} Circuito</a></div></div>`;
       $('#detail', el).scrollIntoView({ block: 'nearest' });
     }

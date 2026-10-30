@@ -200,6 +200,13 @@
     }
     if (GW.alive(my)) { main.focus({ preventScroll: true }); }
   }
+  /** qualquer linha/cartão com link vira clicável por inteiro */
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.target.closest('a, button, input, select, textarea, label, summary')) return;
+    const box = e.target.closest('tbody tr, .bar-row, .stint-row, .sess, .duel-card, .card.hov');
+    const a = box && box.querySelector('a[href^="#/"]');
+    if (a) { e.preventDefault(); location.hash = a.getAttribute('href'); }
+  });
   window.addEventListener('hashchange', route);
   document.addEventListener('DOMContentLoaded', async () => {
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
