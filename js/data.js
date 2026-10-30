@@ -146,7 +146,11 @@
   const FB_SIZE = '29218'; // tamanho da imagem genérica devolvida quando a foto não existe
   const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
   /** pilotos aposentados / sem foto oficial: banco de imagens esportivo (TheSportsDB), conferindo a data de nascimento */
+  let STATIC = null;
   GW.archivePhoto = async (d) => {
+    STATIC = STATIC || fetch('data/driver-photos.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+    const known = (await STATIC)[d.driverId]; // pré-carregado: resposta instantânea, sem limite de consultas
+    if (known !== undefined) return known || null;
     try {
       const q = encodeURIComponent(`${d.givenName} ${d.familyName}`.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().replace(/\s+/g, '_'));
       const r = await GW.http(`https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=${q}`, { ttl: 365 * DAY, persist: true });

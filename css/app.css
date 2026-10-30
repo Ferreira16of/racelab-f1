@@ -264,7 +264,6 @@ footer a { color: var(--tx-2); text-decoration: underline; text-underline-offset
 .skip { position: absolute; left: -999px; } .skip:focus { left: 10px; top: 10px; z-index: 200; background: var(--red); padding: 8px 12px; border-radius: 8px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
-@media (max-width: 560px) { 
 #installBtn[hidden] { display: none; } #installBtn { background: var(--red); border-color: var(--red); color: #fff; flex-shrink: 0; }
 @media (max-width: 1260px) { #installBtn:not([hidden]) { margin-left: auto; } .burger { margin-left: 0; } }
 @media (display-mode: standalone) { body { overscroll-behavior-y: none; } }
