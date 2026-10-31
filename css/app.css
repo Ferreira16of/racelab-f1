@@ -412,3 +412,28 @@ tbody tr:has(a[href^="#/"]), .bar-row:has(a[href^="#/"]), .stint-row:has(a[href^
 .avatar.photo.contain { background-size: contain; background-repeat: no-repeat; background-position: center bottom; background-color: #1a2236; }
 
 .avatar.photo.fit { background-repeat: no-repeat; background-color: #1a2236; }
+
+/* cronometragem ao vivo */
+.lb-pick{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.lb-tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:120px;padding:8px 12px;border:1px solid var(--line,#26304a);border-radius:10px;background:transparent;color:inherit;cursor:pointer;font:inherit;text-align:left;white-space:nowrap}
+.lb-tab b{font-size:13px}.lb-tab span{font-size:11px;opacity:.65}.lb-tab.on{border-color:#e10600;background:rgba(225,6,0,.12)}
+.lb-load{padding:28px 12px;text-align:center;opacity:.75}
+.lb-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.lb-ev{font:700 20px var(--disp,inherit)}.lb-ses{opacity:.7;font-size:14px}
+.lb-chips{display:flex;gap:6px;flex-wrap:wrap}
+.lb-flag{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;background:#1f7a3a;color:#fff}
+.lb-flag.yellow,.lb-flag.sc,.lb-flag.vsc{background:#e6b800;color:#000}.lb-flag.red{background:#c4161c}
+.chip.warn{background:#e6b800;color:#000}
+.lbt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.lbt th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.6;text-align:left;padding:6px 8px;white-space:nowrap}
+.lbt td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);white-space:nowrap;font-size:14px}
+.lbt .r{text-align:right}.lbt .mu{opacity:.35;font-style:normal}
+.lbt tbody tr:hover{background:rgba(255,255,255,.04)}
+.lbt .pos{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.08);font-weight:700;font-size:13px}
+.lbt .p1{background:#f5c518;color:#000}.lbt .p2{background:#c0c4cc;color:#000}.lbt .p3{background:#c9833c;color:#000}
+.lbt .drv{display:flex;align-items:center;gap:9px}.lbt .drv i{width:4px;height:30px;border-radius:2px;background:var(--tc)}
+.lbt .drv b{display:block;font-size:14px}.lbt .drv small{opacity:.6;font-size:11px}
+.lbt .pu{color:#c77dff;font-weight:700}.lbt .gr{color:#3ddc84}
+.lbt .tyre{padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.1);font-size:12px}
+.lb-feed{margin-top:12px;display:grid;gap:4px;font-size:13px;opacity:.85}.lb-feed span{opacity:.5;margin-right:8px}
+@media(max-width:760px){.lbt .s{display:none}.lbt td,.lbt th{padding:6px 5px}.lbt .drv small{display:none}.lb-ev{font-size:17px}}

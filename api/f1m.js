@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   try {
     if (req.query.scan) {
       const from = Math.max(1, +req.query.from || 100), ids = Array.from({ length: 45 }, (_, i) => from + i);
-      const out = (await Promise.all(ids.map((id) => get(id).then((j) => j && j.session && { id, name: j.session.name, event: j.session.event_name, type: j.session.type, final: !!j.final, status: j.session.status && j.session.status.label, at: j.generated_at_ms }, () => null)))).filter(Boolean);
+      const out = (await Promise.all(ids.map((id) => get(id).then((j) => j && j.session && { id, name: j.session.name, event: j.session.event_name, type: j.session.type, final: !!j.final, status: j.session.status && j.session.status.label, at: j.generated_at_ms, n: (j.rows || []).filter((r) => r.position).length, stale: !!j.critical_data_stale }, () => null)))).filter(Boolean);
       res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
       return res.status(200).json(out);
     }

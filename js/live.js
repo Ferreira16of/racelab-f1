@@ -207,29 +207,31 @@
 
   /* ---------- PAINEL AO VIVO (cronometragem em tempo real, grátis) ---------- */
   async function liveBoard(box, tk) {
-    let sel = null, list = [], timer = 0, busy = false, stopped = false;
-    box.innerHTML = `<div class="card"><div class="card-h"><h2><i class="livedot"></i> Cronometragem ao vivo</h2><span class="meta" id="lbSt">conectando…</span></div><div id="lbPick" class="row" style="gap:6px;flex-wrap:wrap"></div><div id="lbBody" class="mt-s"></div></div>`;
+    let sel = null, auto = true, list = [], timer = 0, busy = false, stopped = false, lastScan = 0;
+    box.innerHTML = `<div class="card lb"><div class="card-h"><h2><i class="livedot"></i> Cronometragem ao vivo</h2><span class="meta" id="lbSt">conectando…</span></div><div id="lbPick" class="lb-pick"></div><div id="lbBody" class="mt-s"><div class="lb-load"><i class="livedot"></i> Carregando a sessão…</div></div></div>`;
     const api = (q) => fetch('/api/f1m?' + q, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
-    const pick = () => { $('#lbPick', box).innerHTML = list.slice(-8).reverse().map((x) => `<button class="btn ${x.id === sel ? 'pri' : ''}" data-id="${x.id}">${x.final ? '' : '<i class="livedot"></i> '}${esc(x.name)} · ${esc(String(x.event || '').replace(/ ?\d{4}$/, '').replace(/^GP (d[aeo]s? )?/i, ''))}</button>`).join(''); $$('#lbPick button', box).forEach((b) => (b.onclick = () => { sel = +b.dataset.id; pick(); tick(); })); };
-    const scan = async () => { const from = GW.store.get('f1mFrom', 100); list = await api('scan=1&from=' + from); if (list.length) { GW.store.set('f1mFrom', Math.max(100, list[0].id - 3)); if (!list.some((x) => x.id === sel)) sel = (list.filter((x) => !x.final).pop() || list.at(-1)).id; pick(); } };
+    const short = (x) => String(x.event || '').replace(/ ?\d{4}$/, '').replace(/^GP (d[aeo]s? )?/i, '');
+    const best = () => { const act = list.filter((x) => !x.final && x.n && !x.stale).pop(); return (act || list.filter((x) => x.n).pop() || list.at(-1) || {}).id || null; };
+    const pick = () => { $('#lbPick', box).innerHTML = list.filter((x) => x.n || x.id === sel).slice(-8).reverse().map((x) => `<button class="lb-tab ${x.id === sel ? 'on' : ''}" data-id="${x.id}">${!x.final && x.n && !x.stale ? '<i class="livedot"></i>' : ''}<b>${esc(x.name)}</b><span>${esc(short(x))}</span></button>`).join(''); $$('#lbPick button', box).forEach((b) => (b.onclick = () => { sel = +b.dataset.id; auto = false; pick(); tick(); })); };
+    const scan = async () => { const from = GW.store.get('f1mFrom', 100); list = await api('scan=1&from=' + from); lastScan = Date.now(); if (list.length) { GW.store.set('f1mFrom', Math.max(100, list[0].id - 3)); if (auto || !list.some((x) => x.id === sel)) sel = best(); pick(); } };
+    const cls = (v) => { v = String(v || '').toLowerCase(); return /purple|overall|roxo/.test(v) ? ' pu' : /green|verde|personal|pb/.test(v) ? ' gr' : ''; };
     const tick = async () => {
       if (busy || stopped || !GW.alive(tk)) return; busy = true;
       const body = $('#lbBody', box), st = $('#lbSt', box);
       try {
-        if (!list.length) await scan();
-        if (!sel) { st.textContent = 'nenhuma sessão disponível'; body.innerHTML = '<p class="muted">Ainda não há cronometragem publicada. Ela aparece aqui assim que uma sessão começar.</p>'; busy = false; return; }
-        const j = await api('id=' + sel), S = j.session || {}, age = Date.now() - (j.generated_at_ms || 0), stale = !j.final && (j.critical_data_stale || age > 90000);
-        st.textContent = `${S.name || ''} · ${S.progress || ''}${S.total_laps ? ` · volta ${S.current_lap}/${S.total_laps}` : ''}`;
-        const ok = (v) => (v == null || v === '' ? '—' : esc(v));
-        const rows = (j.rows || []).slice().sort((a, b) => (a.position || 99) - (b.position || 99));
-        body.innerHTML = `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b style="font:700 18px var(--disp)">${esc(S.event_name || '')}</b>${S.status ? `<span class="chip">${esc(S.status.label || '')}</span>` : ''}${j.final ? '<span class="chip">encerrada</span>' : ''}${stale ? '<span class="chip">dados atrasados</span>' : ''}</div>
-          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Pos</th><th>Piloto</th><th>Gap</th><th>Int.</th><th>Última</th><th>Melhor</th><th>S1</th><th>S2</th><th>S3</th><th>Pneu</th><th>Box</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${ok(r.position)}</td><td><b style="border-left:3px solid ${esc(r.team_colour || '#888')};padding-left:6px">${esc(r.driver || '')}</b> <span class="muted">${esc(r.team || '')}</span></td><td>${ok(r.gap)}</td><td>${ok(r.interval)}</td><td>${ok(r.last_lap)}</td><td>${ok(r.best_lap)}</td><td>${ok(r.sector_1)}</td><td>${ok(r.sector_2)}</td><td>${ok(r.sector_3)}</td><td>${ok(r.compound || (r.tyres !== '-' ? r.tyres : ''))}</td><td>${ok(r.pits)}</td></tr>`).join('')}</tbody></table></div>
-          ${(j.updates || []).length ? `<div class="banner info mt-s">${j.updates.slice(0, 5).map((u) => `<div>${esc(String(u.time || '').slice(11, 16))} — ${esc(u.text)}</div>`).join('')}</div>` : ''}`;
-        if (j.final && timer) { clearInterval(timer); timer = 0; }
-      } catch (e) { st.textContent = 'sem conexão'; body.innerHTML = '<p class="muted">Não consegui carregar a cronometragem agora. Tentando de novo…</p>'; }
+        if (!list.length || Date.now() - lastScan > 60000) await scan();
+        if (!sel) { st.textContent = 'sem sessões'; body.innerHTML = '<div class="lb-load">Ainda não há cronometragem publicada. Ela aparece aqui assim que uma sessão começar.</div>'; busy = false; return; }
+        const j = await api('id=' + sel), S = j.session || {}, age = Date.now() - (j.generated_at_ms || 0), stale = !j.final && (j.critical_data_stale || age > 120000);
+        const rows = (j.rows || []).filter((r) => r.position).sort((a, b) => a.position - b.position), ok = (v) => (v == null || v === '' || v === '-' ? '<i class="mu">—</i>' : esc(v));
+        st.textContent = `atualizado ${new Date(j.generated_at_ms || Date.now()).toLocaleTimeString('pt-BR')}`;
+        const flag = (S.status && S.status.key) || '';
+        body.innerHTML = `<div class="lb-head"><div><div class="lb-ev">${esc(S.event_name || '')}</div><div class="lb-ses">${esc(S.name || '')}${S.qualifying_phase_label ? ' · ' + esc(S.qualifying_phase_label) : ''}</div></div><div class="lb-chips">${S.status ? `<span class="lb-flag ${esc(flag)}">${esc(S.status.label || '')}</span>` : ''}${S.progress ? `<span class="chip">${esc(S.progress)}</span>` : ''}${S.total_laps ? `<span class="chip">Volta ${esc(S.current_lap)}/${esc(S.total_laps)}</span>` : ''}${j.final ? '<span class="chip">Encerrada</span>' : ''}${stale ? '<span class="chip warn">Dados atrasados</span>' : ''}</div></div>
+          ${rows.length ? `<div class="tbl-wrap"><table class="lbt"><thead><tr><th>Pos</th><th>Piloto</th><th class="r">Gap</th><th class="r">Int.</th><th class="r">Última</th><th class="r">Melhor</th><th class="r s">S1</th><th class="r s">S2</th><th class="r s">S3</th><th>Pneu</th><th class="r">Box</th></tr></thead><tbody>${rows.map((r) => `<tr><td><span class="pos${r.position <= 3 ? ' p' + r.position : ''}">${esc(r.position)}</span></td><td><div class="drv" style="--tc:${esc(r.team_colour || '#888')}"><i></i><div><b>${esc(r.driver_full_name || r.driver || '')}</b><small>${esc(r.team || '')} · #${esc(r.number || '')}</small></div></div></td><td class="r">${ok(r.gap)}</td><td class="r">${ok(r.interval)}</td><td class="r${cls(r.last_lap_status)}">${/BOX/i.test(r.last_lap || '') ? '<span class="chip">Box</span>' : ok(r.last_lap)}</td><td class="r${cls(r.best_lap_status)}">${ok(r.best_lap)}</td><td class="r s${cls(r.sector_1_status)}">${ok(r.sector_1)}</td><td class="r s${cls(r.sector_2_status)}">${ok(r.sector_2)}</td><td class="r s${cls(r.sector_3_status)}">${ok(r.sector_3)}</td><td>${r.compound ? `<span class="tyre">${esc(r.compound)}</span>` : ok(r.tyres)}</td><td class="r">${esc(r.pits ?? 0)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="lb-load">${j.final ? 'Sessão sem tempos registrados.' : 'Aguardando os primeiros tempos desta sessão…'}</div>`}
+          ${(j.updates || []).length ? `<div class="lb-feed">${j.updates.slice(0, 6).map((u) => `<div><span>${esc(String(u.time || '').slice(11, 16))}</span>${esc(u.text)}</div>`).join('')}</div>` : ''}`;
+      } catch (e) { st.textContent = 'sem conexão'; if (!$('.lbt', body)) body.innerHTML = '<div class="lb-load">Reconectando à cronometragem…</div>'; lastScan = 0; }
       busy = false;
     };
-    await tick(); timer = setInterval(() => { tick(); }, 5000);
+    await tick(); timer = setInterval(tick, 5000);
     return () => { stopped = true; clearInterval(timer); };
   }
 })();
