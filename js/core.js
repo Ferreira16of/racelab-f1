@@ -118,9 +118,9 @@
       active++; prog();
       try {
         let err;
-        const LIVE_MSG = 'Os dados detalhados voltam assim que a sessão em andamento terminar.';
+        const LIVE_MSG = 'A fonte dos dados detalhados está fechada agora (ela fecha antes, durante e logo depois das sessões da F1). Vou tentar de novo sozinho em instantes.';
         if (host === 'api.openf1.org' && !hit) { // durante sessão ao vivo a API detalhada fica fechada: nem tenta (evita erro no console)
-          if (Date.now() - (GW._of1Lock || 0) < 60000 || (GW.liveBlock && (await GW.liveBlock()))) { const e = new Error(LIVE_MSG); e.status = 503; throw e; }
+          if (Date.now() - (GW._of1Lock || 0) < 15000 || (GW.liveBlock && (await GW.liveBlock()))) { const e = new Error(LIVE_MSG); e.status = 503; throw e; }
         }
         for (let i = 0; i < 6; i++) {
           try {

@@ -176,7 +176,7 @@
     const body = $('#rbody', el); let tab = jkind(ses) ? 'res' : 'laps'; $$('#rtabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.t === tab));
     const setTab = async (t) => {
       tab = t; $$('#rtabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.t === t)); body.innerHTML = GW.loading();
-      try { await ({ res: tabRes, pit: tabPit, tyre: tabTyre, laps: tabLaps }[t])(body, y, round, ses, race, tk); } catch (e) { if (GW.alive(tk)) { body.innerHTML = GW.error(e, true); const b = $('[data-retry]', body); if (b) b.onclick = () => setTab(t); } }
+      clearTimeout(el._rt); try { await ({ res: tabRes, pit: tabPit, tyre: tabTyre, laps: tabLaps }[t])(body, y, round, ses, race, tk); } catch (e) { if (GW.alive(tk)) { body.innerHTML = GW.error(e, true); const b = $('[data-retry]', body); if (b) b.onclick = () => setTab(t); if (/fechada/.test(e.message || '')) el._rt = setTimeout(() => { if (GW.alive(tk) && tab === t) setTab(t); }, 30000); } }
     };
     $$('#rtabs button', el).forEach((b) => (b.onclick = () => setTab(b.dataset.t))); setTab(tab);
   };
