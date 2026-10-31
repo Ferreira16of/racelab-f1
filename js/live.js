@@ -209,7 +209,7 @@
   async function liveBoard(box, tk) {
     let base = GW.store.get('liveApi', '') || '';
     const draw = () => {
-      box.innerHTML = `<div class="card"><div class="card-h"><h2><i class="livedot"></i> Painel ao vivo</h2><span class="meta" id="lbSt">${base ? 'conectando…' : 'não configurado'}</span></div>
+      box.innerHTML = `<div class="card"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px"><div><b>Cronometragem em tempo real</b><div class="muted">Tempos, gaps e pneus ao vivo em uma página parceira gratuita.</div></div><a class="btn pri" href="https://www.f1mania.net/ao-vivo/" target="_blank" rel="noopener">${GW.ic('play')} Abrir tempo real</a></div></div><div class="card mt-s"><div class="card-h"><h2><i class="livedot"></i> Painel ao vivo</h2><span class="meta" id="lbSt">${base ? 'conectando…' : 'não configurado'}</span></div>
         <div class="row" style="gap:8px;flex-wrap:wrap"><input id="lbUrl" class="in" style="flex:1;min-width:220px" placeholder="Endereço do servidor ao vivo (ex.: http://localhost:3000)" value="${esc(base)}"><button class="btn pri" id="lbSave">Conectar</button></div>
         <div id="lbBody" class="mt-s"></div></div>`;
       $('#lbSave', box).onclick = () => { base = $('#lbUrl', box).value.trim().replace(/\/+$/, ''); GW.store.set('liveApi', base); stop(); draw(); start(); };
