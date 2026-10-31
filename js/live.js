@@ -176,6 +176,10 @@
      Esta tela acompanha a sessão pelo calendário e abre o replay automaticamente quando os dados forem liberados. */
   async function liveMode(root, o) {
     const { cur, liveSess, tk } = o;
+    const board = document.createElement('div'); root.before(board);
+    const prevClean = o.cleanup; let stopBoard = () => {};
+    liveBoard(board, tk).then((f) => (stopBoard = f));
+    o.cleanup = () => { stopBoard(); board.remove(); };
     if (!liveSess) {
       const next = o.sched.map((r) => ({ r, w: GW.weekend(r) })).flatMap((x) => x.w.map((s) => ({ ...s, race: x.r }))).find((s) => s.status === 'future');
       root.innerHTML = `<div class="card"><div class="state">${GW.ic('clock')}<h3>Nenhuma sessão em andamento agora</h3><p>${next ? `A próxima é <b>${esc(next.name)}</b> do ${esc(next.race.raceName)} — ${esc(U.fmtDT(next.start))} (${U.tzShort()}).` : 'A temporada não tem mais sessões no calendário.'}</p><div class="row" style="justify-content:center"><a class="btn pri" href="#/live/replay">${GW.ic('play')} Ver um replay</a></div></div></div>`;
@@ -198,6 +202,43 @@
       catch { const n = $('#wnote', root); if (n) n.innerHTML = `Sessão encerrada. Preparando o replay${polls > 1 ? ` (verificação ${polls})` : ''}… costuma levar alguns minutos.`; }
     };
     const poll = setInterval(check, 45000); check();
-    o.cleanup = () => { clearInterval(poll); clearInterval(iv); };
+    const c0 = o.cleanup; o.cleanup = () => { c0 && c0(); clearInterval(poll); clearInterval(iv); };
+  }
+
+  /* ---------- PAINEL AO VIVO (servidor f1-livetiming-api, grátis) ---------- */
+  async function liveBoard(box, tk) {
+    let base = GW.store.get('liveApi', '') || '';
+    const draw = () => {
+      box.innerHTML = `<div class="card"><div class="card-h"><h2><i class="livedot"></i> Painel ao vivo</h2><span class="meta" id="lbSt">${base ? 'conectando…' : 'não configurado'}</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><input id="lbUrl" class="in" style="flex:1;min-width:220px" placeholder="Endereço do servidor ao vivo (ex.: http://localhost:3000)" value="${esc(base)}"><button class="btn pri" id="lbSave">Conectar</button></div>
+        <div id="lbBody" class="mt-s"></div></div>`;
+      $('#lbSave', box).onclick = () => { base = $('#lbUrl', box).value.trim().replace(/\/+$/, ''); GW.store.set('liveApi', base); stop(); draw(); start(); };
+    };
+    let timer = 0, busy = false;
+    const stop = () => clearInterval(timer);
+    const val = (v) => (v && typeof v === 'object' ? (v.Value ?? v.value ?? '') : v ?? '');
+    const list = (d) => (Array.isArray(d) ? d : d && typeof d === 'object' ? Object.values(d.Lines || d.drivers || d.standings || d.leaderboard || d) : []);
+    const cmp = { SOFT: ['S', '#e10600'], MEDIUM: ['M', '#ffd12e'], HARD: ['H', '#e8e8e8'], INTERMEDIATE: ['I', '#39b54a'], WET: ['W', '#2a7fff'] };
+    const tick = async () => {
+      if (busy || !GW.alive(tk)) return; busy = true;
+      const body = $('#lbBody', box), st = $('#lbSt', box); if (!body) { busy = false; return; }
+      try {
+        const g = (u) => fetch(base + u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+        const [lb, ses, lap, wx, rc] = await Promise.all([g('/api/leaderboard'), g('/api/session'), g('/api/lap-count'), g('/api/weather'), g('/api/race-control')]);
+        if (!lb) throw new Error('sem resposta');
+        const rows = list(lb.drivers || lb.Lines || lb).filter((r) => r && typeof r === 'object').sort((a, b) => (+val(a.Position) || 99) - (+val(b.Position) || 99));
+        const sn = (ses && (ses.Name || ses.name || ses.Type || ses.type)) || '';
+        st.textContent = `${sn ? sn + ' · ' : ''}${lap && lap.CurrentLap ? `volta ${lap.CurrentLap}/${lap.TotalLaps || '—'} · ` : ''}atualizado ${new Date().toLocaleTimeString('pt-BR')}`;
+        const msgs = list(rc && (rc.Messages || rc)).slice(-3).reverse().map((m) => esc(m.Message || m.message || '')).filter(Boolean);
+        const w = wx ? `Ar ${val(wx.AirTemp)}° · Pista ${val(wx.TrackTemp)}° · Chuva ${+val(wx.Rainfall) ? 'sim' : 'não'}` : '';
+        body.innerHTML = rows.length ? `${w ? `<div class="muted" style="margin-bottom:6px">${w}</div>` : ''}${msgs.length ? `<div class="banner info" style="margin-bottom:8px">${msgs.join('<br>')}</div>` : ''}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Pos</th><th>Piloto</th><th>Equipe</th><th>Gap</th><th>Intervalo</th><th>Última volta</th><th>Melhor</th><th>Pneu</th></tr></thead><tbody>${rows.map((r, i) => {
+          const d = r.Driver || r, col = d.TeamColour || r.TeamColour, ty = (r.Stints && list(r.Stints).slice(-1)[0]) || r.Tyre || {}, c = cmp[String(ty.Compound || r.Compound || '').toUpperCase()];
+          return `<tr><td>${esc(val(r.Position) || i + 1)}</td><td><b style="border-left:3px solid #${esc(String(col || '888').replace('#', ''))};padding-left:6px">${esc(d.Tla || d.NameAcronym || d.RacingNumber || r.RacingNumber || '')}</b> <span class="muted">${esc(d.BroadcastName || d.FullName || '')}</span></td><td>${esc(d.TeamName || r.TeamName || '')}</td><td>${esc(val(r.GapToLeader) || '')}</td><td>${esc(val(r.IntervalToPositionAhead) || '')}</td><td>${esc(val(r.LastLapTime) || '')}</td><td>${esc(val(r.BestLapTime) || '')}</td><td>${c ? `<b style="color:${c[1]}">${c[0]}</b> <span class="muted">${esc(ty.TotalLaps ?? '')}</span>` : ''}${r.InPit ? ' <span class="chip">box</span>' : ''}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="muted">Servidor conectado, aguardando dados da sessão.</p>';
+      } catch (e) { st.textContent = 'sem conexão com o servidor'; body.innerHTML = '<p class="muted">Não consegui falar com o servidor ao vivo. Confira o endereço e se ele está rodando.</p>'; }
+      busy = false;
+    };
+    const start = () => { if (base) { tick(); timer = setInterval(tick, 2000); } };
+    draw(); start();
+    return stop;
   }
 })();
