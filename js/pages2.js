@@ -4,7 +4,7 @@
   const U = GW.util, { esc, $, $$, NA, val, isNum, mean, median, stdev } = U;
   const { J } = GW;
   const tc = (id, name) => GW.teamColor(id, name);
-  const teamCell = (c, y) => `<span class="team-bar" style="background:${tc(c.constructorId, c.name)}"></span><a href="#/teams/${c.constructorId}/${y || ''}">${esc(c.name)}</a>`;
+  const teamCell = (c, y) => `<span class="team-bar" style="background:${tc(c.constructorId, c.name)}"></span>${GW.teamLogo(c.constructorId, 16, y)}<a href="#/teams/${c.constructorId}/${y || ''}">${esc(c.name)}</a>`;
   const favs = () => GW.store.get('favDrivers', []);
   const toggleFav = (id) => { const f = favs(), i = f.indexOf(id); if (i < 0) f.push(id); else f.splice(i, 1); GW.store.set('favDrivers', f); return i < 0; };
 
@@ -145,7 +145,7 @@
     const years = await J.seasons(); const y = +p[0] || GW.ctx.year || GW.currentYear; GW.setCtx({ year: y });
     const [cs, ds] = await Promise.all([J.constructorStandings(y), J.driverStandings(y).catch(() => ({ rows: [] }))]); if (!GW.alive(tk)) return;
     el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Equipes</span><h1>Equipes ${y}</h1><p class="sub">Identidade e formação exibidas conforme a temporada selecionada.</p></div><div class="row">${GW.ctl('ty', 'Temporada', GW.options(years.map((v) => [v, v]), y))}</div></div>
-      <div class="list-grid">${cs.rows.length ? cs.rows.map((r) => `<a class="pcard" href="#/teams/${r.Constructor.constructorId}/${y}" style="border-left-color:${tc(r.Constructor.constructorId, r.Constructor.name)}"><div class="avatar" style="border-radius:12px;font-size:14px">${/^\d+$/.test(r.position) ? r.position + 'º' : '—'}</div><div><h3>${esc(r.Constructor.name)}</h3><p>${esc(r.Constructor.nationality)}</p><p>${GW.pts(r.points)} pts · ${r.wins} vit.</p><p class="muted">${ds.rows.filter((d) => d.Constructors.some((c) => c.constructorId === r.Constructor.constructorId)).map((d) => esc(d.Driver.code || d.Driver.familyName)).join(' · ')}</p></div></a>`).join('') : GW.empty('Sem classificação de construtores', y < 1958 ? 'O campeonato de construtores começou em 1958.' : 'Não há dados de construtores para esta temporada.')}</div>`;
+      <div class="list-grid">${cs.rows.length ? cs.rows.map((r) => `<a class="pcard" href="#/teams/${r.Constructor.constructorId}/${y}" style="border-left-color:${tc(r.Constructor.constructorId, r.Constructor.name)}"><div class="avatar" style="border-radius:12px;font-size:14px">${/^\d+$/.test(r.position) ? r.position + 'º' : '—'}</div><div><h3>${esc(r.Constructor.name)}</h3><p>${esc(r.Constructor.nationality)}</p><p>${GW.pts(r.points)} pts · ${r.wins} vit.</p><p class="muted">${ds.rows.filter((d) => d.Constructors.some((c) => c.constructorId === r.Constructor.constructorId)).map((d) => esc(d.Driver.code || d.Driver.familyName)).join(' · ')}</p></div><span class="tlogo-card">${GW.teamLogo(r.Constructor.constructorId, 34, y)}</span></a>`).join('') : GW.empty('Sem classificação de construtores', y < 1958 ? 'O campeonato de construtores começou em 1958.' : 'Não há dados de construtores para esta temporada.')}</div>`;
     $('#ty', el).onchange = (e) => GW.go(`teams/${e.target.value}`);
   };
   async function teamProfile(id, y, el, tk) {
@@ -161,7 +161,7 @@
     const sd = await GW.seasonData(y); if (!GW.alive(tk)) return;
     const t = sd.teams.get(id), col = tc(id, info.name), ss = ssObj;
     const drvs = [...sd.drivers.values()].filter((e) => e.teams.has(id));
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow" style="color:${col}">Equipe · ${y}</span><h1>${esc(info.name)}</h1><p class="sub">${esc(info.nationality)} · nome e formação válidos para ${y}</p></div><div class="row">${GW.ctl('ty', 'Temporada', GW.options(yearsAll.map((v) => [v, v]), y))}</div></div>
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow" style="color:${col}">Equipe · ${y}</span><h1>${esc(info.name)}</h1><p class="sub">${esc(info.nationality)} · nome e formação válidos para ${y}</p></div>${GW.teamLogo(id, 56, y) ? `<div class="tlogo-hero">${GW.teamLogo(id, 56, y)}</div>` : ''}<div class="row">${GW.ctl('ty', 'Temporada', GW.options(yearsAll.map((v) => [v, v]), y))}</div></div>
       <div class="grid g4">${stat('Posição ' + y, ss ? ordinal(ss.pos) : null, `${ss ? GW.pts(ss.pts) : '—'} pontos`)}${stat('Vitórias ' + y, t?.wins ?? null, 'corridas')}${stat('Pódios ' + y, t?.podiums ?? null, 'somando pilotos')}${stat('Poles ' + y, t?.poles ?? 0)}${stat('Vitórias na história', wins, 'no nome "constructorId" atual')}${stat('GPs (largadas)', starts, 'soma de pilotos')}<div class="card" id="ttl"><div class="stat"><span class="k">Títulos de construtores</span><span class="v">…</span><span class="d">calculando</span></div></div>${stat('Temporadas na F1', yearsAll.length)}</div>
       <p class="note mt-s">${GW.ic('info')}<span>Totais históricos referem-se a esta identidade de equipe; equipes que mudaram de nome (ex.: Racing Point → Aston Martin) aparecem separadas e não são somadas.</span></p>
       <div class="grid g2 mt"><div class="card"><div class="card-h"><h2>Pilotos em ${y}</h2></div><div id="dv"></div></div><div class="card"><div class="card-h"><h2>Comparação entre pilotos</h2></div><div id="cmp"></div></div></div>

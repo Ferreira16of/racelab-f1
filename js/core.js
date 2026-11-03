@@ -59,6 +59,12 @@
     return `hsl(${hsh} 25% 62%)`;
   }
   GW.teamColor = teamColor;
+  /** logo (versão branca) das equipes atuais; equipes sem logo ficam sem imagem */
+  const TLOGO = { alpine: 'alpine', aston_martin: 'astonmartin', audi: 'audi', cadillac: 'cadillac', ferrari: 'ferrari', haas: 'haasf1team', mclaren: 'mclaren', mercedes: 'mercedes', rb: 'racingbulls', red_bull: 'redbullracing', williams: 'williams' };
+  GW.teamLogo = (id, h = 18, year) => {
+    const k = TLOGO[id]; if (!k || (year && +year < 2005)) return '';
+    return `<img class="tlogo" src="https://media.formula1.com/image/upload/c_fit,h_${h * 3}/q_auto/v1740000001/common/f1/2026/${k}/2026${k}logowhite.webp" alt="" height="${h}" loading="lazy" decoding="async" onerror="this.remove()">`;
+  };
   const COMPOUND = { SOFT: '#ff3b3b', MEDIUM: '#ffd23a', HARD: '#f2f2f2', INTERMEDIATE: '#3ec65a', WET: '#3a8bff', C1: '#f2f2f2', C2: '#f2f2f2', C3: '#ffd23a', C4: '#ff3b3b', C5: '#ff3b3b' };
   GW.COMPOUND = COMPOUND;
 

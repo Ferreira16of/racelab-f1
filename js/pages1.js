@@ -5,7 +5,7 @@
   const { J, O } = GW;
   const tc = (id, name) => GW.teamColor(id, name);
   const drvLink = (y, d, txt) => `<a href="#/drivers/${y}/${d.driverId}">${esc(txt ?? GW.fullName(d))}</a>`;
-  const teamCell = (c) => c ? `<span class="team-bar" style="background:${tc(c.constructorId, c.name)}"></span><a href="#/teams/${c.constructorId}">${esc(c.name)}</a>` : NA;
+  const teamCell = (c) => c ? `<span class="team-bar" style="background:${tc(c.constructorId, c.name)}"></span>${GW.teamLogo(c.constructorId, 16)}<a href="#/teams/${c.constructorId}">${esc(c.name)}</a>` : NA;
   const posTxt = (r) => (/^\d+$/.test(r.positionText || r.position) ? r.position : esc(r.positionText || r.position || '—'));
 
   /* ---------- dados agregados de uma temporada (cache em memória) ---------- */
@@ -92,7 +92,7 @@
         ${ds?.rows.length ? ds.rows.slice(0, 8).map((r) => `<div class="bar-row"><span><span class="na" style="color:inherit">${r.position}</span> ${drvLink(y, r.Driver, r.Driver.code || r.Driver.familyName)}</span><div class="tr"><i style="width:${(+r.points / maxPts) * 100}%;background:${tc(r.Constructors[0]?.constructorId, r.Constructors[0]?.name)}"></i></div><span class="v">${GW.pts(r.points)}</span></div>`).join('') : GW.empty('Classificação indisponível')}
         <p class="note mt-s">${GW.ic('clock')}<span>Referência: após a etapa ${ds?.round ?? '—'}</span></p></div>
       <div class="card"><div class="card-h"><h2>Construtores</h2><a class="btn sm" href="#/championships/${y}/constructors">Classificação completa</a></div>
-        ${cs?.rows.length ? cs.rows.map((r) => `<div class="bar-row"><span><span class="na" style="color:inherit">${r.position}</span> <a href="#/teams/${r.Constructor.constructorId}/${y}">${esc(r.Constructor.name)}</a></span><div class="tr"><i style="width:${(+r.points / maxC) * 100}%;background:${tc(r.Constructor.constructorId, r.Constructor.name)}"></i></div><span class="v">${GW.pts(r.points)}</span></div>`).join('') : GW.empty('Classificação indisponível')}</div>
+        ${cs?.rows.length ? cs.rows.map((r) => `<div class="bar-row"><span><span class="na" style="color:inherit">${r.position}</span> ${GW.teamLogo(r.Constructor.constructorId, 16, y)}<a href="#/teams/${r.Constructor.constructorId}/${y}">${esc(r.Constructor.name)}</a></span><div class="tr"><i style="width:${(+r.points / maxC) * 100}%;background:${tc(r.Constructor.constructorId, r.Constructor.name)}"></i></div><span class="v">${GW.pts(r.points)}</span></div>`).join('') : GW.empty('Classificação indisponível')}</div>
     </div>
     <div class="card mt"><div class="card-h"><h2>Destaques da temporada</h2></div><div class="grid g4" id="hl">${GW.loading('Calculando destaques…')}</div></div>
     <h2 class="mt" style="margin-bottom:12px">Análises</h2>

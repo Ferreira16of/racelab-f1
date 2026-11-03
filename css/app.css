@@ -442,3 +442,9 @@ tbody tr:has(a[href^="#/"]), .bar-row:has(a[href^="#/"]), .stint-row:has(a[href^
 .hero .hero-track { position: absolute; z-index: 0; right: 44px; top: 50%; transform: translateY(-50%); width: min(36%, 400px); height: 82%; display: grid; place-items: center; pointer-events: none; filter: drop-shadow(0 0 18px rgba(225,6,0,.35)); }
 .hero .hero-track svg { width: 100%; height: 100%; }
 @media (max-width: 980px) { .hero .hero-track { display: none; } }
+
+.tlogo{height:16px;width:auto;max-width:44px;object-fit:contain;vertical-align:middle;margin:0 6px 0 2px;opacity:.9}
+.pcard{position:relative}.tlogo-card{position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.9;pointer-events:none}
+.tlogo-card .tlogo{height:34px;max-width:90px;margin:0}
+.tlogo-hero{margin-left:auto;padding:0 8px}.tlogo-hero .tlogo{height:56px;max-width:180px;margin:0}
+@media(max-width:640px){.tlogo-card .tlogo{height:26px;max-width:64px}.tlogo-hero .tlogo{height:38px}}
