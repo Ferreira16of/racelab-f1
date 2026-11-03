@@ -123,7 +123,7 @@
   }
 
   async function tabCircuit(pb, id, tk) {
-    pb.innerHTML = `<div class="banner info">O histórico por circuito exige baixar todos os resultados do piloto (várias requisições). Fica em cache depois do primeiro carregamento.</div><div class="mt-s"><button class="btn pri" id="lc">${GW.ic('db')} Carregar resultados por circuito</button></div><div id="kc"></div>`;
+    pb.innerHTML = `<div class="banner info">O histórico por circuito reúne todas as corridas do piloto e pode levar alguns segundos para carregar.</div><div class="mt-s"><button class="btn pri" id="lc">${GW.ic('db')} Carregar resultados por circuito</button></div><div id="kc"></div>`;
     $('#lc', pb).onclick = async (ev) => {
       ev.currentTarget.disabled = true; const out = $('#kc', pb); out.innerHTML = GW.loading('Baixando resultados da carreira…');
       try {

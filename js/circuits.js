@@ -74,7 +74,7 @@
     }).catch((e) => { if (GW.alive(tk)) $('#hist', el).innerHTML = GW.error(e); });
 
     // geometria
-    if (!yr) { $('#map', el).innerHTML = GW.empty('Sem geometria disponível', 'O traçado interativo está disponível para circuitos usados a partir de 2023. Este circuito não foi usado desde então — nenhum desenho genérico é exibido no lugar.'); return; }
+    if (!yr) { $('#map', el).innerHTML = GW.empty('Sem geometria disponível', 'Este circuito não tem traçado disponível.'); return; }
     const race = modern.find((r) => +r.season === yr);
     let meeting, mv;
     try { const keys = await fetch('data/circuit-keys.json').then((r) => r.json()).catch(() => ({})); mv = keys[id] ? await GW.MV.circuit(keys[id], yr) : null; } catch (e) { $('#map', el).innerHTML = GW.error(e); return; }
@@ -115,7 +115,7 @@
         if (isNum(s1) && isNum(s2)) { const k = idxAt(s1 + s2); mk.push({ x: L[k].x, y: L[k].y, color: '#fff', label: 'S2|S3' }); }
         out.innerHTML = `<div class="legend"><span>Volta mais rápida da classificação ${yr}: <b>${esc(d?.full_name || '#' + bl.driver_number)}</b> — ${lapTime(bl.lap_duration)} (V${bl.lap_number}) · S1 ${lapTime(s1)} · S2 ${lapTime(s2)} · S3 ${lapTime(bl.duration_sector_3)}</span></div><div class="legend"><span><i class="dot" style="background:hsl(240 90% 55%)"></i>${vmin} km/h</span><span><i class="dot" style="background:hsl(0 90% 55%)"></i>${vmax} km/h</span><span></span></div><div id="tmap2"></div><div id="tinfo" class="tx2" style="min-height:22px;font:12px var(--mono)">Passe o cursor sobre o traçado.</div>
           <div class="row mt-s"><a class="btn sm" id="tl2" href="#/telemetry/${yr}/${race.round}/${q.session_key}/${bl.driver_number}/${bl.lap_number}">${GW.ic('pulse')} Analisar esta volta no Telemetry Lab</a></div>
-          <p class="note mt-s">${GW.ic('info')}<span>Trajetória medida (location, ~4 Hz) colorida pela velocidade (car_data). ${aligned ? 'Curvas numeradas sobrepostas (sistemas de coordenadas compatíveis).' : 'As curvas numeradas não puderam ser sobrepostas a esta trajetória.'}</span></p>`;
+          <p class="note mt-s">${GW.ic('info')}<span>Trajetória real da volta colorida pela velocidade. ${aligned ? 'Curvas numeradas sobrepostas (sistemas de coordenadas compatíveis).' : 'As curvas numeradas não puderam ser sobrepostas a esta trajetória.'}</span></p>`;
         GW.trackMap($('#tmap2', out), { pts: L.map((r) => [r.x, r.y]), colors, markers: mk, corners: aligned ? corners : [], rotation: aligned ? mv.rotation : 0, height: 420, title: 'Volta mais rápida colorida por velocidade', onMove: (i) => { const s = i == null ? null : spd(L[i].t); $('#tinfo', out).textContent = s ? `t=${L[i].t.toFixed(1)} s · ${s.v} km/h · acelerador ${s.th}% · freio ${s.br ? 'ON' : 'off'} · marcha ${s.g}` : 'Passe o cursor sobre o traçado.'; } });
       } catch (err) { out.innerHTML = GW.error(err); e.currentTarget.disabled = false; }
     };
