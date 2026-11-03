@@ -64,7 +64,26 @@
 <script defer src="js/pages1.js"></script>
 <script>
 (function () {
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    var had = !!navigator.serviceWorker.controller, reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (!had) { had = true; return; } if (reloading) return; reloading = true; location.reload(); });
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        var check = function () { if (navigator.onLine) reg.update().catch(function () {}); };
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+        window.addEventListener('online', check);
+        setInterval(check, 10 * 60 * 1000);
+      }).catch(function () {});
+    });
+  }
+  (function () {
+    var bar = document.createElement('div'); bar.setAttribute('role', 'status');
+    bar.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:99;background:#1b2234;color:#f1f3fa;border:1px solid #2a3350;border-radius:99px;padding:8px 16px;font:500 13px Inter,sans-serif;display:none';
+    bar.textContent = 'Sem internet — usando a versão salva. Atualizo sozinho quando voltar.';
+    document.addEventListener('DOMContentLoaded', function () { document.body.appendChild(bar); sync(); });
+    function sync() { bar.style.display = navigator.onLine ? 'none' : 'block'; }
+    window.addEventListener('online', sync); window.addEventListener('offline', sync);
+  })();
   var ev, btn = document.getElementById('installBtn');
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); ev = e; btn.hidden = false; });
   btn.addEventListener('click', function () { if (!ev) return; ev.prompt(); ev.userChoice.finally(function () { ev = null; btn.hidden = true; }); });
