@@ -223,7 +223,7 @@
     const a = box && box.querySelector('a[href^="#/"]');
     if (a) { e.preventDefault(); location.hash = a.getAttribute('href'); }
   });
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', () => { route(); try { if (window.va) window.va('pageview', { route: null, path: '/' + location.hash.replace(/^#\/?/, '') }); } catch { /* sem métricas */ } });
   document.addEventListener('DOMContentLoaded', async () => {
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
     $('#tzlabel').textContent = `${tz} (${tzShort()})`;
