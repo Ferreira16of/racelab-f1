@@ -437,3 +437,8 @@ tbody tr:has(a[href^="#/"]), .bar-row:has(a[href^="#/"]), .stint-row:has(a[href^
 .lbt .tyre{padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.1);font-size:12px}
 .lb-feed{margin-top:12px;display:grid;gap:4px;font-size:13px;opacity:.85}.lb-feed span{opacity:.5;margin-right:8px}
 @media(max-width:760px){.lbt .s{display:none}.lbt td,.lbt th{padding:6px 5px}.lbt .drv small{display:none}.lb-ev{font-size:17px}}
+
+.hero > * { position: relative; z-index: 1; }
+.hero .hero-track { position: absolute; z-index: 0; right: 44px; top: 50%; transform: translateY(-50%); width: min(36%, 400px); height: 82%; display: grid; place-items: center; pointer-events: none; filter: drop-shadow(0 0 18px rgba(225,6,0,.35)); }
+.hero .hero-track svg { width: 100%; height: 100%; }
+@media (max-width: 980px) { .hero .hero-track { display: none; } }
