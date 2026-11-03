@@ -1,0 +1,10 @@
+{
+  "pix": { "key": "", "name": "", "qr": "" },
+  "links": [{ "label": "", "url": "" }],
+  "contact": { "email": "", "telegram": "" },
+  "tiers": [
+    { "id": "torcedor", "name": "Torcedor", "price": "R$ 5", "perks": ["Nome no Mural de Apoiadores", "Selo de Apoiador oficial"] },
+    { "id": "mecanico", "name": "Mecânico", "price": "R$ 15", "perks": ["Tudo do Torcedor", "Link para seu site ou perfil no Mural", "Mensagem personalizada"] },
+    { "id": "chefe", "name": "Chefe de equipe", "price": "R$ 30", "perks": ["Tudo do Mecânico", "Destaque no topo do Mural", "Voto na próxima funcionalidade"] }
+  ]
+}
