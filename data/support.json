@@ -1,8 +1,9 @@
 {
   "pix": {
     "key": "50020044828",
-    "name": "",
-    "qr": ""
+    "name": "RaceLab F1",
+    "qr": "",
+    "city": "SAO PAULO"
   },
   "links": [],
   "contact": {
@@ -17,7 +18,8 @@
       "perks": [
         "Nome no Mural de Apoiadores",
         "Selo de Apoiador oficial"
-      ]
+      ],
+      "amount": 5
     },
     {
       "id": "mecanico",
@@ -27,7 +29,8 @@
         "Tudo do Torcedor",
         "Link para seu site ou perfil no Mural",
         "Mensagem personalizada"
-      ]
+      ],
+      "amount": 15
     },
     {
       "id": "chefe",
@@ -37,7 +40,8 @@
         "Tudo do Mecânico",
         "Destaque no topo do Mural",
         "Voto na próxima funcionalidade"
-      ]
+      ],
+      "amount": 30
     }
   ]
 }
