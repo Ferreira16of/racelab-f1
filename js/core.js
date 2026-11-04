@@ -229,7 +229,7 @@
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
     $('#tzlabel').textContent = `${tz} (${tzShort()})`;
     renderCtx();
-    fetch('data/support.json', { cache: 'no-cache' }).then((r) => r.json()).then((c) => { if ((c.pix && c.pix.key) || (c.links || []).some((l) => l.url) || (c.contact && c.contact.email)) document.querySelectorAll('.sup-link').forEach((a) => (a.hidden = false)); }).catch(() => {});
+    fetch('data/support.json', { cache: 'no-cache' }).then((r) => r.json()).then((c) => { if (c.public === true) document.querySelectorAll('.sup-link').forEach((a) => (a.hidden = false)); }).catch(() => {});
     if (!location.hash) location.hash = '#/home';
     route();
   });
