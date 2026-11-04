@@ -30,6 +30,7 @@
   }
   const deltaStr = (d, dec = 3) => (isNum(d) ? (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d).toFixed(dec) : '—');
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tzNice = () => { try { const n = new Intl.DateTimeFormat('pt-BR', { timeZoneName: 'longGeneric' }).formatToParts(new Date()).find((p) => p.type === 'timeZoneName'); if (n && n.value) return n.value; } catch { /* usa o padrão */ } return tz.split('/').pop().replace(/_/g, ' '); };
   const tzShort = () => { try { return new Date().toLocaleTimeString('pt-BR', { timeZoneName: 'short' }).split(' ').pop(); } catch { return tz; } };
   function toDate(date, time) { return new Date(`${date}T${time || '12:00:00Z'}`); }
   const fmtDay = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
@@ -40,7 +41,7 @@
   const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
   const stdev = (a) => { if (a.length < 2) return null; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
   const quantile = (sorted, q) => { const p = (sorted.length - 1) * q, b = Math.floor(p); return sorted[b] + (sorted[Math.min(b + 1, sorted.length - 1)] - sorted[b]) * (p - b); };
-  Object.assign(GW.util, { esc, $, $$, isNum, NA, val, sleep, debounce, lapTime, totalTime, parseLap, deltaStr, tz, tzShort, toDate, fmtDay, fmtDT, fmtFull, ago, mean, median, stdev, quantile });
+  Object.assign(GW.util, { esc, $, $$, isNum, NA, val, sleep, debounce, lapTime, totalTime, parseLap, deltaStr, tz, tzShort, tzNice, toDate, fmtDay, fmtDT, fmtFull, ago, mean, median, stdev, quantile });
 
   /* ---------- team colours (Jolpica constructorId) ---------- */
   const TEAMS = {
@@ -227,7 +228,7 @@
   window.addEventListener('hashchange', route);
   document.addEventListener('DOMContentLoaded', async () => {
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
-    $('#tzlabel').textContent = `${tz} (${tzShort()})`;
+    $('#tzlabel').textContent = `${tzNice()} (${tzShort()})`;
     renderCtx();
     fetch('data/support.json', { cache: 'no-cache' }).then((r) => r.json()).then((c) => { if (c.public === true) document.querySelectorAll('.sup-link').forEach((a) => (a.hidden = false)); }).catch(() => {});
     if (!location.hash) location.hash = '#/home';
