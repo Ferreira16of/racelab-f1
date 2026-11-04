@@ -617,3 +617,5 @@ footer .sup-link{color:inherit;text-decoration:underline}
   .sp-nav .btn{flex:1 1 auto;justify-content:center}.sp-total{width:100%}
 }
 #sp-wiz,#sp-spon{scroll-margin-top:80px}
+.sp-err{margin:0;padding:10px 12px;border:1px solid #ff5a50;border-radius:10px;background:rgba(255,90,80,.1);color:#ff8a82;font-size:13.5px}
+.sp-err[hidden]{display:none}
