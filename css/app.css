@@ -472,3 +472,29 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .sup-name{font-weight:700}.sup-name a{color:inherit;text-decoration:underline}
 .sup-badge.b-chefe{background:#f5c518;color:#000}.sup-badge.b-mecanico{background:#c0c4cc;color:#000}.sup-badge.b-torcedor{background:#c9833c;color:#000}
 .sup-spon ul{padding-left:18px;display:grid;gap:4px}
+.sup-opt{display:flex;gap:8px;align-items:center;cursor:pointer}.sup-opt input{width:18px;height:18px;accent-color:#e10600}
+
+/* navegação: celular e tablet */
+.nav-links a svg{display:none}
+@media (max-width:1240px){
+  :root{--nav-h:64px}
+  .nav-in{gap:12px}
+  .logo svg{height:34px}
+  .burger,.nav .sup-link,#installBtn{height:44px;min-width:44px;border-radius:12px}
+  .burger{width:44px}.burger svg{width:22px;height:22px}
+  .nav .sup-link{padding:0 14px;font-size:14px}.nav .sup-link span{display:inline}
+  .nav-links{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;padding:16px 18px 32px!important}
+  .nav-links a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:92px;padding:14px 8px!important;text-align:center;font-size:15px!important}
+  .nav-links a svg{display:block;width:26px;height:26px;opacity:.9}
+  .nav-links a.on svg{color:#e10600;opacity:1}
+}
+@media (max-width:700px){
+  .nav-links{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .nav-links a{flex-direction:row;justify-content:flex-start;min-height:64px;padding:12px 14px!important;text-align:left;gap:12px}
+  .nav-links a svg{width:22px;height:22px;flex:none}
+  .nav .sup-link span{display:none}.nav .sup-link{padding:0;width:44px;justify-content:center}.nav .sup-link svg{width:19px;height:19px}
+}
+@media (max-width:360px){.nav-links{grid-template-columns:minmax(0,1fr)!important}.logo svg{height:30px}}
+/* o filtro de desfoque no .nav prendia o menu (position:fixed) dentro dele: o fundo vai para um pseudo-elemento */
+.nav{background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.nav::before{content:'';position:absolute;inset:0;z-index:-1;background:rgba(7,9,15,.82);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid var(--line)}

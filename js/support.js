@@ -21,14 +21,15 @@
         ${hasPay ? `${pix.key ? `<div class="sup-pix"><b>Pix</b><div class="sup-key"><code id="pixk">${esc(pix.key)}</code><button class="btn sm" id="pixc">Copiar</button></div>${pix.name ? `<small class="muted">Favorecido: ${esc(pix.name)}</small>` : ''}${pix.qr ? `<img class="sup-qr" src="${esc(pix.qr)}" alt="QR Code do Pix" loading="lazy">` : ''}</div>` : ''}
         ${links.length ? `<div class="row mt-s" style="gap:8px;flex-wrap:wrap">${links.map((l) => `<a class="btn pri" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</div>` : ''}`
         : `<p class="muted">As formas de apoio serão divulgadas em breve.</p>`}
-        <p class="note mt-s">${GW.ic('info')}<span>Depois de apoiar, conte seu nome pelo formulário ao lado e você entra no Mural em até alguns dias. A inclusão é feita manualmente e só com o seu consentimento.</span></p>
+        <p class="note mt-s">${GW.ic('info')}<span>Ao finalizar o pagamento, você em breve será <b>Apoiador oficial</b>. Preencha o formulário ao lado e escolha se quer aparecer no Mural ou apoiar de forma anônima. A confirmação é feita manualmente, por isso pode levar alguns dias.</span></p>
       </div>
-      <div class="card"><div class="card-h"><h2>Entrar no Mural</h2></div>
-        ${ct.email ? `<form id="supf" class="sup-form"><div class="ctl"><label for="sn">Como quer aparecer</label><input id="sn" required maxlength="40" placeholder="Seu nome ou apelido"></div>
+      <div class="card"><div class="card-h"><h2>Já apoiou? Confirme aqui</h2></div>
+        ${ct.email ? `<form id="supf" class="sup-form"><div class="ctl"><label for="sn">Seu nome ou apelido</label><input id="sn" required maxlength="40" placeholder="Como podemos te chamar"></div>
         <div class="ctl"><label for="st">Nível</label><select id="st">${tiers.map((t) => `<option value="${esc(t.id)}">${esc(t.name)} — ${esc(t.price)}</option>`).join('') || '<option>Apoiador</option>'}</select></div>
         <div class="ctl"><label for="sl">Link opcional (site ou perfil)</label><input id="sl" type="url" placeholder="https://"></div>
         <div class="ctl"><label for="sm">Mensagem opcional</label><input id="sm" maxlength="100" placeholder="Ex.: Vai, RaceLab!"></div>
-        <button class="btn pri" type="submit">Enviar por e-mail</button></form>` : `<p class="muted">Contato para o Mural em breve.</p>`}
+        <label class="sup-opt"><input type="checkbox" id="sv" checked> <span>Quero aparecer no Mural de Apoiadores</span></label><small class="muted">Desmarcado, você continua sendo Apoiador oficial, mas seu nome não é exibido no site.</small>
+        <button class="btn pri" type="submit">Enviar por e-mail</button></form>` : `<p class="muted">Confirmação em breve.</p>`}
       </div>
     </div>
     <div class="card mt"><div class="card-h"><h2>Mural de Apoiadores</h2><span class="meta">${people.length ? people.length + (people.length === 1 ? ' apoiador' : ' apoiadores') : ''}</span></div>
@@ -44,6 +45,6 @@
     const pc = $('#pixc', el);
     if (pc) pc.onclick = async () => { try { await navigator.clipboard.writeText(pix.key); pc.textContent = 'Copiado!'; } catch { const r = document.createRange(); r.selectNodeContents($('#pixk', el)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); pc.textContent = 'Selecionado'; } setTimeout(() => (pc.textContent = 'Copiar'), 1800); };
     const f = $('#supf', el);
-    if (f) f.onsubmit = (e) => { e.preventDefault(); const v = (i) => $('#' + i, el).value.trim(); location.href = mail(ct.email, 'Mural de Apoiadores RaceLab F1', `Quero aparecer no Mural de Apoiadores.\n\nNome: ${v('sn')}\nNível: ${tierName(v('st'))}\nLink: ${v('sl')}\nMensagem: ${v('sm')}\n\n(Anexe o comprovante do apoio.)`); };
+    if (f) f.onsubmit = (e) => { e.preventDefault(); const v = (i) => $('#' + i, el).value.trim(); location.href = mail(ct.email, 'Mural de Apoiadores RaceLab F1', `Quero aparecer no Mural de Apoiadores.\n\nNome: ${v('sn')}\nNível: ${tierName(v('st'))}\nAparecer no Mural: ${$('#sv', el).checked ? 'sim' : 'não (apoio anônimo)'}\nLink: ${v('sl')}\nMensagem: ${v('sm')}\n\n(Anexe o comprovante do apoio.)`); };
   };
 })();

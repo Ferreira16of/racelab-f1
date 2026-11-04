@@ -190,7 +190,7 @@
   GW.reload = () => route();
 
   function renderNav(cur) {
-    $('#navlinks').innerHTML = NAV.map(([p, t]) => `<a href="#/${p}" class="${p === cur ? 'on' : ''}" ${p === cur ? 'aria-current="page"' : ''}>${t}</a>`).join('');
+    $('#navlinks').innerHTML = NAV.map(([p, t, i]) => `<a href="#/${p}" class="${p === cur ? 'on' : ''}" ${p === cur ? 'aria-current="page"' : ''}>${GW.ic(i)}<span>${t}</span></a>`).join('');
   }
   function renderCtx() {
     const c = GW.ctx, el = $('#navctx'); if (!el) return;
@@ -201,6 +201,7 @@
     const name = GW.pages[parts[0]] || LAZY[parts[0]] ? parts[0] : 'home';
     const params = parts.slice(1);
     const my = ++token, main = $('#app');
+    try { if (window.va) window.va('pageview', { route: parts.length > 1 ? `/${name}/[...]` : `/${name === 'home' ? '' : name}`, path: '/' + (name === 'home' ? '' : parts.join('/')) }); } catch { /* sem métricas */ }
     if (cleanup) { try { cleanup(); } catch { /* noop */ } cleanup = null; }
     renderNav(name); $('#navlinks').classList.remove('open');
     const titles = Object.fromEntries(NAV.map((n) => [n[0], n[1]])); titles.support = 'Apoie';
@@ -223,7 +224,7 @@
     const a = box && box.querySelector('a[href^="#/"]');
     if (a) { e.preventDefault(); location.hash = a.getAttribute('href'); }
   });
-  window.addEventListener('hashchange', () => { route(); try { if (window.va) window.va('pageview', { route: null, path: '/' + location.hash.replace(/^#\/?/, '') }); } catch { /* sem métricas */ } });
+  window.addEventListener('hashchange', route);
   document.addEventListener('DOMContentLoaded', async () => {
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
     $('#tzlabel').textContent = `${tz} (${tzShort()})`;
