@@ -144,7 +144,7 @@
         <div class="card"><div class="card-h"><h2>Telemetria sincronizada</h2><span class="meta">Passe o cursor: todos os gráficos e o mapa acompanham</span></div>
           <div class="legend"><span><i class="dot" style="background:${colA}"></i>${esc(nameA)} — ${esc(da?.full_name || '')} · V${la.lap_number}</span>${hasB ? `<span><i class="dot" style="background:${colB}"></i>${esc(nameB)} — ${esc(db?.full_name || '')} · V${lb.lap_number}</span>` : ''}</div>
           <div class="tel-stack">${active.map(([k, n]) => `<div class="tel-panel"><div class="ch-label"><span>${n}${defs[k]?.unit ? ' (' + defs[k].unit + ')' : k === 'time' ? ' (s)' : k === 'delta' ? ' (s)' : ''}</span></div><div id="ch-${k}"></div></div>`).join('')}</div>
-          <div class="tel-panel axis"><div class="ch-label"><span>Distância percorrida (m)</span></div><div id="ch-axis"></div></div>
+          <div class="tel-axis"><div id="ch-axis"></div><div class="tel-axis-l">Distância percorrida na volta (metros)</div></div>
           <ul class="tel-notes"><li><b>Distância:</b> posição na volta em metros, ajustada ao comprimento médio das duas voltas (${(Ls / 1000).toFixed(3)} km).</li><li><b>Delta de tempo:</b> acima de zero, o piloto comparado está atrás.</li><li><b>Setores:</b> faixas coloridas S1, S2 e S3, aproximadas pelos tempos oficiais.</li><li><b>Freio:</b> aparece apenas como ligado ou desligado.</li></ul></div>
         <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
           <div class="card"><div class="card-h"><h2>Mapa da volta</h2><span class="chip meas">location</span></div><div id="tmap"></div><div class="legend mt-s"><span><i class="dot" style="background:${colA}"></i>${esc(nameA)} mais rápido no trecho</span>${hasB ? `<span><i class="dot" style="background:${colB}"></i>${esc(nameB)} mais rápido</span>` : ''}</div></div>
@@ -157,7 +157,7 @@
         else GW.lineChart(c, { ...common, series: defs[k].series, height: h, yFmt: (v) => v, yDomain: k === 'throttle' ? [-3, 103] : k === 'brake' ? [-5, 105] : k === 'gear' ? [0.5, 8.5] : undefined, unit: defs[k].unit, title: defs[k].name, yMin0: k === 'speed' || k === 'rpm' });
       });
       // eixo de distância compartilhado
-      GW.lineChart($('#ch-axis', out), { series: [{ name: '', color: 'transparent', pts: [[x0, 0], [x1, 0]] }], xDomain: dom, xFmt: xF, height: 34, yDomain: [-1, 1], yFmt: () => '', ml: 54, group: 'tel', bands: bands.map((b) => ({ ...b, label: '' })), onHover: common.onHover, title: 'Eixo de distância' });
+      GW.lineChart($('#ch-axis', out), { series: [{ name: '', color: '#3a4666', w: 1.5, pts: [[x0, 0], [x1, 0]] }], xDomain: dom, xFmt: (v) => Math.round(v), height: 32, yDomain: [-1, 1], yFmt: () => '', ml: 54, group: 'tel', bands: bands.map((b) => ({ ...b, label: '' })), onHover: common.onHover, title: 'Eixo de distância' });
       // mapa
       let map = null, mapIdx = () => null;
       const loc = L.locA.map((r) => ({ t: (+new Date(r.date) - +new Date(la.date_start)) / 1000, x: r.x, y: r.y })).filter((r) => r.t >= -0.3 && r.t <= la.lap_duration + 0.3 && !(r.x === 0 && r.y === 0));
