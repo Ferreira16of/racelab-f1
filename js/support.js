@@ -32,6 +32,7 @@
       ['Para onde vai o dinheiro?', 'Para domínio, hospedagem e para o tempo de desenvolvimento de novas análises e melhorias. O site continua gratuito e sem anúncios.'],
       ['Posso apoiar sem aparecer no site?', 'Sim. No passo 2, desligue “Aparecer no Mural”. Você continua sendo Apoiador oficial, mas seu nome não é exibido.'],
       ['Quanto tempo leva para eu virar Apoiador oficial?', 'É automático: assim que o pagamento é aprovado, você vira Apoiador oficial e, se escolheu aparecer, seu nome entra no Mural em poucos minutos.'],
+      ['Posso pedir reembolso?', 'Não. O apoio é uma contribuição voluntária e não é reembolsável, então confira o valor antes de pagar. Em caso de cobrança em duplicidade ou com valor errado, escreva para o e-mail de contato e verificamos.'],
       ['O apoio é mensal?', 'Não. É um pagamento único, no valor que você escolher. Se quiser apoiar de novo no futuro, fico muito grato.'],
     ];
     const STEPS = [['Escolha o valor', 'Nível ou valor livre'], ['Seus dados', 'Como quer aparecer'], ['Pagamento', 'Confirmação automática']];
@@ -85,7 +86,7 @@
     }
 
     function step2(p) {
-      p.innerHTML = `<h2>Como você quer aparecer?</h2><p class="sp-sub">Seu apoio de <b>${brl(amount())}</b> é confirmado automaticamente assim que o pagamento é aprovado.</p>
+      p.innerHTML = `<h2>Como você quer aparecer?</h2><p class="sp-sub">Seu apoio de <b>${brl(amount())}</b> é confirmado automaticamente assim que o pagamento é aprovado. O apoio é voluntário e não é reembolsável.</p>
         <form id="supf" class="sp-form" novalidate>
           <label class="sp-switch"><input type="checkbox" id="sv" ${S.show ? 'checked' : ''}><i></i><span><b>Aparecer no Mural de Apoiadores</b><small id="svh"></small></span></label>
           <div class="sp-opt" id="spopt" ${S.show ? '' : 'hidden'}>
@@ -96,6 +97,7 @@
           <p class="sp-err" id="sperr" role="alert" hidden></p>
           <div class="sp-nav"><button class="btn" id="spb2" type="button">Voltar</button><button class="btn pri lg" id="spn2" type="submit" ${PC.ready ? '' : 'disabled'}>${PC.ready ? 'Pagar ' + brl(amount()) : 'Pagamento em breve'}</button></div>
           <small class="sp-hint">Pagamento seguro em janela da Paddle. Você pode apoiar sem aparecer: desligue a opção acima.</small>
+          <small class="sp-hint"><b>Atenção:</b> o apoio é voluntário e <b>não é reembolsável</b>. Confira o valor antes de pagar.</small>
         </form>`;
       const sv = $('#sv', p), svh = $('#svh', p), opt = $('#spopt', p), err = $('#sperr', p);
       const hint = () => { svh.textContent = sv.checked ? 'Seu nome e mensagem ficam visíveis no site.' : 'Apoio anônimo: você é Apoiador oficial, mas seu nome não aparece.'; opt.hidden = !sv.checked; };

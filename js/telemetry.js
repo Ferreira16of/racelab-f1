@@ -31,7 +31,7 @@
     el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Telemetry Lab</span><h1>Compare voltas, metro a metro</h1><p class="sub">Telemetria real do carro (~4 amostras por segundo). Distância, delta e ganhos por trecho são calculados por integração e interpolação.</p></div></div>
     <div class="card"><div class="grid tel-filters">
       ${GW.ctl('tY', 'Temporada', GW.options(years.map((y) => [y, y]), st.year))}${GW.ctl('tM', 'Grande Prêmio', '<option>Carregando…</option>')}${GW.ctl('tS', 'Sessão', '<option>—</option>', 'disabled')}
-      ${GW.ctl('tA', 'Piloto principal', '<option>—</option>', 'disabled')}${GW.ctl('tLA', 'Volta do piloto principal', '<option>—</option>', 'disabled')}
+      ${GW.ctl('tA', 'Piloto principal', '<option>—</option>', 'disabled')}${GW.ctl('tLA', 'Volta do principal', '<option>—</option>', 'disabled')}
       ${GW.ctl('tB', 'Piloto para comparar', '<option>—</option>', 'disabled')}${GW.ctl('tLB', 'Volta do comparado', '<option>—</option>', 'disabled')}
       ${GW.ctl('tSec', 'Trecho', '<option value="0">Volta inteira</option><option value="1">Setor 1</option><option value="2">Setor 2</option><option value="3">Setor 3</option>')}</div>
       <div class="row mt-s" id="tMet"><span class="muted" style="font:600 10.5px var(--mono);letter-spacing:.1em">MÉTRICAS</span>${METRICS.map(([k, n]) => `<label class="chip" style="cursor:pointer"><input type="checkbox" data-m="${k}" ${st.m[k] ? 'checked' : ''}> ${n}</label>`).join('')}<span class="sp"></span><button class="btn sm" id="tBest">Melhor volta de cada</button><button class="btn pri sm" id="tGo">${GW.ic('play')} Analisar</button></div></div>
