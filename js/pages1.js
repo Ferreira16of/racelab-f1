@@ -1,4 +1,4 @@
-/* RaceLab F1 — Home, Temporadas, Resultados, Campeonatos */
+/* RaceLab — Home, Temporadas, Resultados, Campeonatos */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, NA, val, lapTime, totalTime, deltaStr, fmtDT, fmtDay, fmtFull, toDate, ago, isNum } = U;

@@ -1,4 +1,4 @@
-/* RaceLab F1 — core: utilities, http (cache/throttle/retry), store, router, UI helpers */
+/* RaceLab — core: utilities, http (cache/throttle/retry), store, router, UI helpers */
 (function () {
   'use strict';
   const GW = (window.GW = { pages: {}, util: {}, lastUpdate: {} });
@@ -183,7 +183,7 @@
   const LAZY = { drivers: 'pages2', teams: 'pages2', wars: 'pages2', telemetry: 'telemetry', strategy: 'strategy', circuits: 'circuits', live: 'live', support: 'support' };
   const loaded = {};
   const loadJs = (n) => (loaded[n] = loaded[n] || new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = `js/${n}.js`; sc.onload = res; sc.onerror = () => { delete loaded[n]; rej(new Error('Não foi possível carregar esta página. Verifique sua conexão.')); }; document.head.appendChild(sc); }));
-  const DESC = { home: 'Resultados, classificação, próximo GP e destaques da temporada de Fórmula 1.', seasons: 'Calendário completo da Fórmula 1 por temporada, com sessões e resultados.', results: 'Resultados de corridas, classificação, sprint, pit stops, pneus e melhores voltas da Fórmula 1.', drivers: 'Perfis de pilotos de Fórmula 1: vitórias, pódios, poles, títulos e comparação com companheiros.', teams: 'Equipes de Fórmula 1: pilotos, pontos, vitórias e evolução no campeonato de construtores.', championships: 'Classificação de pilotos e construtores da Fórmula 1 e lista de campeões mundiais.', telemetry: 'Telemetry Lab: compare voltas da Fórmula 1 com velocidade, freio, acelerador e delta de tempo.', strategy: 'Strategy Lab: simule estratégias de pit stop, pneus e Safety Car com intervalos de incerteza.', circuits: 'Circuit Explorer: traçado real, curvas, histórico de vencedores e recordes dos circuitos de F1.', wars: 'Driver Wars: compare pilotos de Fórmula 1 lado a lado, na mesma temporada ou na carreira.', support: 'Apoie o RaceLab F1 e apareça no Mural de Apoiadores, ou fale sobre patrocínio.', live: 'Acompanhe os carros na pista, a classificação e a direção de prova ao vivo ou em replay.' };
+  const DESC = { home: 'Resultados, classificação, próximo GP e destaques da temporada de Fórmula 1.', seasons: 'Calendário completo da Fórmula 1 por temporada, com sessões e resultados.', results: 'Resultados de corridas, classificação, sprint, pit stops, pneus e melhores voltas da Fórmula 1.', drivers: 'Perfis de pilotos de Fórmula 1: vitórias, pódios, poles, títulos e comparação com companheiros.', teams: 'Equipes de Fórmula 1: pilotos, pontos, vitórias e evolução no campeonato de construtores.', championships: 'Classificação de pilotos e construtores da Fórmula 1 e lista de campeões mundiais.', telemetry: 'Telemetry Lab: compare voltas da Fórmula 1 com velocidade, freio, acelerador e delta de tempo.', strategy: 'Strategy Lab: simule estratégias de pit stop, pneus e Safety Car com intervalos de incerteza.', circuits: 'Circuit Explorer: traçado real, curvas, histórico de vencedores e recordes dos circuitos de F1.', wars: 'Driver Wars: compare pilotos de Fórmula 1 lado a lado, na mesma temporada ou na carreira.', support: 'Apoie o RaceLab e apareça no Mural de Apoiadores, ou fale sobre patrocínio.', live: 'Acompanhe os carros na pista, a classificação e a direção de prova ao vivo ou em replay.' };
   const setMeta = (name) => { const d = DESC[name] || DESC.home; [['meta[name=description]'], ['meta[property="og:description"]'], ['meta[name="twitter:description"]']].forEach(([q]) => { const m = document.querySelector(q); if (m) m.content = d; }); };
   GW.alive = (t) => t === token;
   GW.go = (path) => { location.hash = '#/' + path.replace(/^#?\/?/, ''); };
@@ -206,7 +206,7 @@
     if (cleanup) { try { cleanup(); } catch { /* noop */ } cleanup = null; }
     renderNav(name); $('#navlinks').classList.remove('open');
     const titles = Object.fromEntries(NAV.map((n) => [n[0], n[1]])); titles.support = 'Apoie';
-    document.title = name === 'home' ? 'RaceLab F1 — Resultados, telemetria e análise de Fórmula 1' : `${titles[name]} — RaceLab F1`; setMeta(name);
+    document.title = name === 'home' ? 'RaceLab — Resultados, telemetria e análise de Fórmula 1' : `${titles[name]} — RaceLab`; setMeta(name);
     main.innerHTML = GW.skeleton();
     window.scrollTo({ top: 0 });
     try { if (!GW.pages[name] && LAZY[name]) await loadJs(LAZY[name]); if (!GW.alive(my)) return; const c = await GW.pages[name](params, main, my); if (typeof c === 'function') cleanup = c; }

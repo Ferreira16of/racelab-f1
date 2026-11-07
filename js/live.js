@@ -1,4 +1,4 @@
-/* RaceLab F1 — Ao vivo e replay: pilotos se movendo na pista (posição, ordem, intervalos, mensagens da direção de prova) */
+/* RaceLab — Ao vivo e replay: pilotos se movendo na pista (posição, ordem, intervalos, mensagens da direção de prova) */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, isNum } = U;

@@ -1,4 +1,4 @@
-/* RaceLab F1 — Strategy Lab: simulador de estratégia (modelo analítico + Monte Carlo) */
+/* RaceLab — Strategy Lab: simulador de estratégia (modelo analítico + Monte Carlo) */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, isNum, lapTime, median, quantile, deltaStr } = U;

@@ -1,4 +1,4 @@
-/* RaceLab F1 — Pilotos, Equipes, Driver Wars */
+/* RaceLab — Pilotos, Equipes, Driver Wars */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, NA, val, isNum, mean, median, stdev } = U;

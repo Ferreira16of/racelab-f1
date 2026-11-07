@@ -1,6 +1,6 @@
 {
-  "name": "RaceLab F1",
-  "short_name": "RaceLab F1",
+  "name": "RaceLab",
+  "short_name": "RaceLab",
   "description": "Resultados, telemetria, estratégia, circuitos e comparação de pilotos da Fórmula 1.",
   "start_url": "./index.html#/home",
   "scope": "./",

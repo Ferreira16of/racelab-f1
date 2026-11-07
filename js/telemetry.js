@@ -1,4 +1,4 @@
-/* RaceLab F1 — Telemetry Lab */
+/* RaceLab — Telemetry Lab */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, isNum, lapTime, deltaStr } = U;

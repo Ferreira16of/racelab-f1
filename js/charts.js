@@ -1,4 +1,4 @@
-/* RaceLab F1 — SVG charts (line w/ synced cursor, bars, track map) */
+/* RaceLab — SVG charts (line w/ synced cursor, bars, track map) */
 (function () {
   'use strict';
   const { esc, isNum } = GW.util;

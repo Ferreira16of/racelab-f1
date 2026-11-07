@@ -1,4 +1,4 @@
-/* RaceLab F1 — Apoie: assistente em 3 passos (valor, dados, pagamento via Paddle), mural de apoiadores e patrocínio */
+/* RaceLab — Apoie: assistente em 3 passos (valor, dados, pagamento via Paddle), mural de apoiadores e patrocínio */
 (function () {
   'use strict';
   const { esc, $, $$ } = GW.util;
@@ -41,8 +41,8 @@
     <section class="sp-hero">
       <div class="sp-hero-txt">
         <span class="sp-pill">${GW.ic('star')} Apoie o projeto</span>
-        <h1>Ajude o RaceLab F1 a continuar de pé</h1>
-        <p>O RaceLab F1 é gratuito e sem anúncios. Seu apoio paga domínio, hospedagem e o tempo para criar novas análises, e você entra no <b>Mural de Apoiadores</b> com o selo de <b>Apoiador oficial</b>.</p>
+        <h1>Ajude o RaceLab a continuar de pé</h1>
+        <p>O RaceLab é gratuito e sem anúncios. Seu apoio paga domínio, hospedagem e o tempo para criar novas análises, e você entra no <b>Mural de Apoiadores</b> com o selo de <b>Apoiador oficial</b>.</p>
         <div class="sp-cta"><a class="btn pri lg" href="#" data-go="sp-wiz">Apoiar agora</a><a class="btn lg" href="#" data-go="sp-spon">Sou uma marca</a></div>
         <ul class="sp-uses"><li>Hospedagem e domínio</li><li>Dados sempre atualizados</li><li>Novas análises e telas</li></ul>
       </div>
@@ -60,9 +60,9 @@
     </section>
 
     <div class="sp-two mt">
-      <section id="sp-spon" class="card sp-spon"><span class="sp-pill">Para marcas</span><h2>Patrocine o RaceLab F1</h2><p>Associe sua marca a um público apaixonado por Fórmula 1 e análise de dados, com espaços discretos que não atrapalham a leitura.</p>
+      <section id="sp-spon" class="card sp-spon"><span class="sp-pill">Para marcas</span><h2>Patrocine o RaceLab</h2><p>Associe sua marca a um público apaixonado por Fórmula 1 e análise de dados, com espaços discretos que não atrapalham a leitura.</p>
         <ul class="sp-checks"><li>Logo e link no rodapé e na Home</li><li>Página de parceiro com texto e link</li><li>Menção nas divulgações de cada Grande Prêmio</li><li>Formatos sob medida para o seu objetivo</li></ul>
-        ${ct.email ? `<div class="sp-cta"><a class="btn pri" href="mailto:${esc(ct.email)}?subject=${enc('Patrocínio RaceLab F1')}&body=${enc('Olá! Tenho interesse em patrocinar o RaceLab F1.\n\nMarca:\nSite:\nObjetivo:\nOrçamento aproximado:\n')}">Falar sobre patrocínio</a><a class="btn" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&fs=1&to=${enc(ct.email)}&su=${enc('Patrocínio RaceLab F1')}">Abrir no Gmail</a></div>` : '<p class="muted">Contato em breve.</p>'}</section>
+        ${ct.email ? `<div class="sp-cta"><a class="btn pri" href="mailto:${esc(ct.email)}?subject=${enc('Patrocínio RaceLab')}&body=${enc('Olá! Tenho interesse em patrocinar o RaceLab.\n\nMarca:\nSite:\nObjetivo:\nOrçamento aproximado:\n')}">Falar sobre patrocínio</a><a class="btn" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&fs=1&to=${enc(ct.email)}&su=${enc('Patrocínio RaceLab')}">Abrir no Gmail</a></div>` : '<p class="muted">Contato em breve.</p>'}</section>
       <section class="card sp-faqc"><h2>Perguntas frequentes</h2><div class="sp-faq">${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>
     </div>`;
 
@@ -131,7 +131,7 @@
         const r = await api('/api/apoiar?id=' + S.txn);
         if (r.ok && r.j.paid) {
           const t = $('#spth', el); if (!t) return;
-          t.innerHTML = `<div class="sp-ok">✓</div><h2>Pagamento confirmado. Obrigado!</h2><p>Você agora é <b>Apoiador oficial</b> do RaceLab F1${S.show ? ' e seu nome aparece no Mural em alguns minutos' : ', sem ter o nome exibido'}. O recibo foi enviado para o seu e-mail.</p><div class="sp-nav"><a class="btn pri" href="#/home">Voltar ao início</a></div>`;
+          t.innerHTML = `<div class="sp-ok">✓</div><h2>Pagamento confirmado. Obrigado!</h2><p>Você agora é <b>Apoiador oficial</b> do RaceLab${S.show ? ' e seu nome aparece no Mural em alguns minutos' : ', sem ter o nome exibido'}. O recibo foi enviado para o seu e-mail.</p><div class="sp-nav"><a class="btn pri" href="#/home">Voltar ao início</a></div>`;
           S.txn = null; return;
         }
         if (++n > 40) { const t = $('#spth', el); if (t) t.innerHTML = '<div class="sp-ok">!</div><h2>Ainda aguardando o banco</h2><p>Se você já pagou, seu apoio será confirmado em breve e o recibo chega por e-mail. Se não concluiu, volte e tente novamente.</p><div class="sp-nav"><button class="btn" id="spretry" type="button">Voltar</button></div>'; const rb = $('#spretry', el); if (rb) rb.onclick = () => go(2); return; }

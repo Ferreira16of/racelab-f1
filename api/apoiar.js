@@ -1,4 +1,4 @@
-/* RaceLab F1 — apoios via Paddle (sem banco de dados: o Mural é montado a partir das transações pagas).
+/* RaceLab — apoios via Paddle (sem banco de dados: o Mural é montado a partir das transações pagas).
    Variáveis de ambiente (Vercel > Settings > Environment Variables):
      PADDLE_API_KEY       chave de API (servidor) — nunca no código
      PADDLE_CLIENT_TOKEN  token de cliente (público, começa com live_ ou test_)
@@ -81,7 +81,7 @@ module.exports = async (req, res) => {
         currency_code: 'BRL',
         collection_mode: 'automatic',
         custom_data: custom,
-        items: [{ quantity: 1, price: { name: 'Apoio RaceLab F1 — ' + TN[t], description: 'Apoio único ao RaceLab F1 (' + TN[t] + ')', unit_price: { amount: String(Math.round(v * 100)), currency_code: 'BRL' }, product: { name: 'Apoio ao RaceLab F1', description: 'Apoio único ao projeto RaceLab F1', tax_category: 'standard' } } }],
+        items: [{ quantity: 1, price: { name: 'Apoio RaceLab — ' + TN[t], description: 'Apoio único ao RaceLab (' + TN[t] + ')', unit_price: { amount: String(Math.round(v * 100)), currency_code: 'BRL' }, product: { name: 'Apoio ao RaceLab', description: 'Apoio único ao projeto RaceLab', tax_category: 'standard' } } }],
       }),
     });
     return send(200, { id: r.data.id });

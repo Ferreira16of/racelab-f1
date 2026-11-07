@@ -1,4 +1,4 @@
-/* RaceLab F1 — Circuit Explorer */
+/* RaceLab — Circuit Explorer */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, isNum, parseLap, lapTime } = U;
