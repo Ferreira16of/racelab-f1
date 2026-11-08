@@ -28,13 +28,13 @@
         <div class="sp-cta"><a class="btn pri lg" href="#" data-go="sp-form">Falar sobre patrocínio</a>${mail ? `<a class="btn lg" href="mailto:${esc(mail)}?subject=${enc('Mídia kit RaceLab')}&body=${enc(kitBody)}">Pedir mídia kit</a>` : ''}</div>
         <ul class="sp-uses"><li>Público fiel de Fórmula 1</li><li>Sem anúncios de rede</li><li>Formatos sob medida</li></ul>
       </div>
-      <div class="sp-preview" aria-hidden="true"><div class="sp-pv-card b2"></div><div class="sp-pv-card b1"></div><div class="sp-pv-card main"><div class="sp-pv-top"><span class="sp-av lg">${GW.ic('star')}</span><div><b>Sua marca aqui</b><span class="sp-badge b-chefe">Parceiro oficial</span></div></div><ul><li>Logo e link na Home e no rodapé</li><li>Página própria de parceiro</li><li>Menção em cada Grande Prêmio</li></ul></div></div>
+      <div class="sp-preview" aria-hidden="true"><div class="sp-pv-card main"><div class="sp-pv-top"><span class="sp-av lg">${GW.ic('star')}</span><div><b>Sua marca aqui</b><span class="sp-badge b-chefe">Parceiro oficial</span></div></div><ul><li>Logo e link na Home e no rodapé</li><li>Página própria de parceiro</li><li>Menção em cada Grande Prêmio</li></ul></div></div>
     </section>
 
-    <div class="sp-two mt">
-      <section class="card sp-spon"><span class="sp-pill">Formatos</span><h2>Como sua marca aparece</h2>
+    <div class="sp-two spn-two mt">
+      <section class="card spn-box"><span class="sp-pill">Formatos</span><h2>Como sua marca aparece</h2>
         <ul class="sp-checks"><li>Logo e link no rodapé e na Home</li><li>Página de parceiro com texto, imagem e link</li><li>Destaque discreto na tela Ao vivo, durante as sessões</li><li>Menção nas divulgações de cada Grande Prêmio</li><li>Pacotes por temporada, etapa ou campanha</li></ul></section>
-      <section class="card sp-faqc"><span class="sp-pill">Por que patrocinar</span><h2>Um público que acompanha toda corrida</h2>
+      <section class="card spn-box"><span class="sp-pill">Por que patrocinar</span><h2>Um público que acompanha toda corrida</h2>
         <ul class="sp-checks"><li>Fãs que voltam a cada fim de semana de corrida</li><li>Leitura focada em dados, sem poluição visual</li><li>Acesso pelo celular, tablet e computador</li><li>Parceria direta, sem intermediários</li></ul></section>
     </div>
 

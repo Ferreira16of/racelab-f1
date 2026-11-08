@@ -733,3 +733,12 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .spn-steps b{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--red-dim,rgba(225,6,0,.15));color:#ff5a50;font:700 14px var(--mono,monospace)}
 .spn-steps span{min-width:0}
 @media(max-width:700px){.spn-card{padding:18px 14px}.spn-steps{grid-template-columns:minmax(0,1fr)}.spn-form .sp-send .btn{flex:1 1 100%}}
+
+/* Patrocínio: alinhamento dos blocos */
+.spn-two{align-items:stretch}
+.spn-box{display:flex;flex-direction:column;gap:0;padding:26px;background:radial-gradient(600px 220px at 0% 0%,rgba(225,6,0,.12),transparent 60%),var(--card)}
+.spn-box .sp-pill{align-self:flex-start}
+.spn-box h2{margin:14px 0 16px;font-size:22px;line-height:1.2}
+.spn-box .sp-checks{margin:0}
+.sp-preview{min-height:0}
+.sp-pv-card.main{width:min(100%,360px)}
