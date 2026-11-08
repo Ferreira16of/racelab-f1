@@ -17,7 +17,6 @@
       ['Quanto tempo leva para a marca entrar no ar?', 'Depois de fechado o acordo e recebido o material (logo e link), a publicação costuma ser feita em poucos dias.'],
     ];
     const budgets = ['Ainda não definido', 'Até R$ 500', 'R$ 500 a R$ 1.500', 'R$ 1.500 a R$ 5.000', 'Acima de R$ 5.000'];
-    const kitBody = 'Olá! Gostaria de receber o mídia kit e as opções de patrocínio do RaceLab.\n\nMarca:\nSite:\n';
 
     el.innerHTML = `
     <section class="sp-hero">
@@ -25,7 +24,7 @@
         <span class="sp-pill">${GW.ic('star')} Para marcas e empresas</span>
         <h1>Patrocine o RaceLab</h1>
         <p>O RaceLab é o lugar onde fãs de Fórmula 1 acompanham resultados, telemetria e tempos ao vivo. Associe sua marca a esse público apaixonado, com espaços discretos que não atrapalham a leitura.</p>
-        <div class="sp-cta"><a class="btn pri lg" href="#" data-go="sp-form">Falar sobre patrocínio</a>${mail ? `<a class="btn lg" href="mailto:${esc(mail)}?subject=${enc('Mídia kit RaceLab')}&body=${enc(kitBody)}">Pedir mídia kit</a>` : ''}</div>
+        <div class="sp-cta"><a class="btn pri lg" href="#" data-go="sp-form">Falar sobre patrocínio</a></div>
         <ul class="sp-uses"><li>Público fiel de Fórmula 1</li><li>Sem anúncios de rede</li><li>Formatos sob medida</li></ul>
       </div>
       <div class="sp-preview" aria-hidden="true"><div class="spn-pv"><div class="spn-pv-top"><span class="spn-pv-ic">${GW.ic('star')}</span><div class="spn-pv-id"><b>Sua marca aqui</b><span class="spn-pv-badge">Parceiro oficial</span></div></div><ul class="spn-pv-list"><li>Logo e link na Home e no rodapé</li><li>Página própria de parceiro</li><li>Menção em cada Grande Prêmio</li></ul></div></div>
