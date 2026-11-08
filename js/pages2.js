@@ -256,7 +256,7 @@
     q.addEventListener('focus', loadAll);
     const enrich = (id) => { // equipe atual (se ainda corre): dá a foto recente certa
       if (season) return; const c = find(id); if (!c || c.teams.length || c.tried) return; c.tried = true;
-      J.raw(`current/drivers/${id}/constructors.json`).then((d) => { const t = d.ConstructorTable.Constructors; if (t.length && GW.alive(tk)) { c.teams = t; drawChips(); } }).catch(() => {});
+      J.raw(`current/drivers/${id}/constructors.json`).then((d) => { const t = d.ConstructorTable.Constructors; if (t.length && GW.alive(tk)) { c.teams = t; TM[id] = t.map((x) => x.constructorId).join(','); drawChips(); } }).catch(() => {});
     };
     if (!season) { // dados dos pilotos já escolhidos (nome e foto certos na hora)
       picks.forEach((id) => { if (find(id)) return enrich(id); J.raw(`drivers/${id}.json`).then((d) => { const x = d.DriverTable.Drivers[0]; if (x && !find(id) && GW.alive(tk)) { cands.push({ d: x, teams: [], pts: 0 }); drawChips(); enrich(id); } }).catch(() => {}); });
@@ -292,18 +292,36 @@
     const draw6 = () => { const rn = $('#wc', wb).value; const rows = sd.res.filter((r) => !rn || r.round === +rn).map((r) => ({ r, cells: E.map((e) => e.rounds[r.round]) })); GW.table($('#w6', wb), [{ k: 'r', label: 'GP', render: (x) => `<a href="#/results/${y}/${x.r.round}/race">R${x.r.round} ${esc(x.r.raceName.replace(' Grand Prix', ''))}</a>`, sort: (x) => x.r.round }, ...E.map((e, i) => ({ k: 'd' + i, label: names[i], num: true, render: (x) => { const c = x.cells[i]; return c && c.pos != null ? `<span title="largada P${c.q ?? '?'}">${/^\d+$/.test(c.text) ? 'P' + c.pos : `<span class="down">${esc(c.text)}</span>`}${isNum(c.q) ? ` <span class="muted">(q${c.q})</span>` : ''}</span>` : NA; }, sort: (x) => x.cells[i]?.pos }))], rows, { sortKey: 'r' }); };
     $('#wc', wb).onchange = draw6; draw6();
   }
+  /* carreira rápida: poucas consultas agregadas (totais) em vez de baixar corrida por corrida */
+  const QC = {}, TM = {};
+  const TITLES = { hamilton: 7, michael_schumacher: 7, fangio: 5, prost: 4, vettel: 4, max_verstappen: 4, brabham: 3, stewart: 3, lauda: 3, piquet: 3, senna: 3, ascari: 2, clark: 2, hill: 2, fittipaldi: 2, hakkinen: 2, alonso: 2, farina: 1, hawthorn: 1, phil_hill: 1, surtees: 1, hulme: 1, rindt: 1, hunt: 1, andretti: 1, jones: 1, scheckter: 1, keke_rosberg: 1, mansell: 1, damon_hill: 1, jacques_villeneuve: 1, raikkonen: 1, button: 1, rosberg: 1, norris: 1 }; // títulos mundiais (a API gratuita não lista campeões sem informar a temporada)
+  GW.careerQuick = (id) => (QC[id] = QC[id] || (async () => {
+    const driver = await J.driver(id); if (!driver) throw new Error('Piloto não encontrado');
+    const T = (p) => J.total(p);
+    const ys = await J.raw(`drivers/${id}/seasons.json?limit=100`);
+    const years = ys.SeasonTable.Seasons.map((x) => +x.season);
+    const starts = await T(`drivers/${id}/results.json`), p1 = await T(`drivers/${id}/results/1.json`), p2 = await T(`drivers/${id}/results/2.json`), p3 = await T(`drivers/${id}/results/3.json`), poles = await T(`drivers/${id}/grid/1/results.json`), fl = await T(`drivers/${id}/fastest/1/results.json`);
+    if (starts == null) throw new Error('Muitas consultas em pouco tempo. Aguarde alguns segundos e tente de novo.');
+    return { driver, years, starts, wins: p1, podiums: p1 == null ? null : p1 + (p2 || 0) + (p3 || 0), poles, fl: Math.max(...years) >= 2004 ? fl : null, titles: TITLES[id] || 0 };
+  })().catch((e) => { delete QC[id]; throw e; }));
   async function careerWar(wb, picks, sd, y, tk) {
     if (picks.length < 2) { wb.innerHTML = GW.empty('Escolha ao menos dois pilotos'); return; }
-    wb.innerHTML = GW.loading('Carregando carreiras… na primeira vez pode levar alguns segundos');
-    let C; try { C = await Promise.all(picks.map((id) => GW.careerFull(id))); } catch (e) { wb.innerHTML = GW.error(e); return; }
-    if (!GW.alive(tk)) return;
+    wb.innerHTML = GW.loading('Calculando as carreiras…');
+    let C; try { C = await Promise.all(picks.map((id) => GW.careerQuick(id))); } catch (e) { wb.innerHTML = GW.error(e); return; }
+    if (!GW.alive(tk) || picks.join() !== C.map((c) => c.driver.driverId).join()) return;
     const rate = (c, k) => (isNum(c[k]) && c.starts ? (c[k] / c.starts) * 100 : null);
-    const m = [['Temporadas', C.map((c) => c.seasons.length)], ['GPs disputados', C.map((c) => c.starts)], ['Vitórias', C.map((c) => c.wins)], ['Pódios', C.map((c) => c.podiums)], ['Poles', C.map((c) => c.poles)], ['Voltas mais rápidas', C.map((c) => c.fl)], ['Títulos', C.map((c) => c.titles)], ['Pontos totais*', C.map((c) => c.points)], ['% vitórias / largada', C.map((c) => rate(c, 'wins')), 1], ['% pódios / largada', C.map((c) => rate(c, 'podiums')), 1], ['% poles / largada', C.map((c) => rate(c, 'poles')), 1]];
-    wb.innerHTML = `<div class="banner">Comparação de <b>épocas diferentes</b>: número de corridas por ano, sistema de pontos, confiabilidade, carros e regras mudaram. Totais absolutos favorecem carreiras longas; as taxas ajudam, mas não resolvem a diferença de contexto.</div>
-      <div class="card flush mt-s"><div class="tbl-wrap scroll-x"><table><thead><tr><th>Indicador</th>${C.map((c, i) => `<th class="num" style="color:${WCOL[i]}">${esc(GW.fullName(c.driver))}</th>`).join('')}</tr></thead><tbody>${m.map(([n, vs, dec]) => { const mx = Math.max(...vs.filter(isNum)); return `<tr><td class="tx2">${n}</td>${vs.map((v) => `<td class="num ${isNum(v) && v === mx && vs.filter(isNum).length > 1 ? 'up' : ''}">${isNum(v) ? (dec ? (+v).toFixed(dec) + '%' : GW.pts(v)) : NA}</td>`).join('')}</tr>`; }).join('')}<tr><td class="tx2">Período</td>${C.map((c) => `<td class="num">${c.seasons[0].year}–${c.seasons.at(-1).year}</td>`).join('')}</tr></tbody></table></div></div>
-      <p class="note mt-s">${GW.ic('info')}<span>*Soma dos pontos finais de cada temporada pelo sistema vigente na época.</span></p>
-      <div class="grid g2 mt"><div class="card"><div class="card-h"><h2>Posição final por ano de carreira</h2></div><div id="cw1"></div></div><div class="card"><div class="card-h"><h2>Pontos acumulados na carreira</h2></div><div id="cw2"></div></div></div>`;
-    GW.lineChart($('#cw1', wb), { series: C.map((c, i) => ({ name: GW.fullName(c.driver), color: WCOL[i], dots: true, pts: c.seasons.map((s, k) => [k + 1, s.pos]) })), legend: true, height: 260, yDomain: [Math.max(...C.flatMap((c) => c.seasons.map((s) => s.pos))) + 1, 0], yFmt: (v) => Math.round(v) + 'º', xFmt: (v) => 'Ano ' + Math.round(v), tipRow: (s, v) => v + 'º', tipHead: (x) => `${Math.round(x)}º ano de carreira` });
-    GW.lineChart($('#cw2', wb), { series: C.map((c, i) => { let a = 0; return { name: GW.fullName(c.driver), color: WCOL[i], pts: c.seasons.map((s, k) => [k + 1, (a += s.pts)]) }; }), legend: true, height: 260, xFmt: (v) => 'Ano ' + Math.round(v), unit: 'pts', yMin0: true, tipHead: (x) => `${Math.round(x)}º ano de carreira` });
+    const m = [['Temporadas', C.map((c) => c.years.length)], ['GPs disputados', C.map((c) => c.starts)], ['Títulos', C.map((c) => c.titles)], ['Vitórias', C.map((c) => c.wins)], ['Pódios', C.map((c) => c.podiums)], ['Poles', C.map((c) => c.poles)], ['Voltas mais rápidas', C.map((c) => c.fl)], ['% de vitórias por GP', C.map((c) => rate(c, 'wins')), 1], ['% de pódios por GP', C.map((c) => rate(c, 'podiums')), 1], ['% de poles por GP', C.map((c) => rate(c, 'poles')), 1]];
+    const wins = (vs) => { const v = vs.filter(isNum), mx = Math.max(...v); return v.length > 1 && vs.filter((x) => x === mx).length === 1 ? vs.indexOf(mx) : -1; };
+    wb.innerHTML = `<div class="banner">Comparação de <b>épocas diferentes</b>: o número de corridas por ano, o sistema de pontos, a confiabilidade e os carros mudaram. Totais absolutos favorecem carreiras longas; as taxas por GP ajudam, mas não resolvem a diferença de contexto.</div>
+      <div class="cw-cards mt-s">${C.map((c, i) => `<div class="cw-card" style="--c:${WCOL[i]}">${'<div class="avatar" data-id="' + esc(c.driver.driverId) + '" data-given="' + esc(c.driver.givenName) + '" data-family="' + esc(c.driver.familyName) + '" data-dob="' + esc(c.driver.dateOfBirth || '') + '" data-year="' + (Math.max(...c.years) >= 2024 ? Math.max(...c.years) : 0) + '" data-teams="' + (TM[c.driver.driverId] || '') + '">' + esc(c.driver.code || c.driver.familyName.slice(0, 3).toUpperCase()) + '</div>'}<div><b>${esc(GW.fullName(c.driver))}</b><small>${c.years.length ? Math.min(...c.years) + '–' + Math.max(...c.years) : ''}${c.titles ? ` · ${c.titles} ${c.titles > 1 ? 'títulos' : 'título'}` : ''}</small></div></div>`).join('')}</div>
+      <div class="card flush mt-s"><div class="tbl-wrap scroll-x"><table><thead><tr><th>Indicador</th>${C.map((c, i) => `<th class="num" style="color:${WCOL[i]}">${esc(c.driver.familyName)}</th>`).join('')}</tr></thead><tbody>${m.map(([n, vs, dec]) => { const b = wins(vs); return `<tr><td class="tx2">${n}</td>${vs.map((v, i) => `<td class="num ${i === b ? 'up' : ''}">${isNum(v) ? (dec ? (+v).toFixed(dec) + '%' : GW.pts(v)) : NA}</td>`).join('')}</tr>`; }).join('')}</tbody></table></div></div>
+      <p class="note mt-s">${GW.ic('info')}<span>Voltas mais rápidas só existem nos registros a partir de 2004. Poles = largadas na primeira posição. Destaque verde = maior valor da linha, não "melhor piloto".</span></p>
+      <div class="grid g2 mt"><div class="card"><div class="card-h"><h2>Vitórias por ano de carreira</h2></div><div id="cw1"></div></div><div class="card"><div class="card-h"><h2>Pontos acumulados na carreira</h2></div><div id="cw2"></div></div></div>`;
+    GW.hydratePhotos(wb);
+    Promise.all(picks.map((id) => GW.career(id))).then((K) => {
+      if (!GW.alive(tk) || !$('#cw1', wb)) return;
+      GW.lineChart($('#cw1', wb), { series: K.map((c, i) => ({ name: c.driver.familyName, color: WCOL[i], dots: true, pts: c.seasons.map((s, k) => [k + 1, s.wins]) })), legend: true, height: 260, xFmt: (v) => 'Ano ' + Math.round(v), yMin0: true, unit: 'vitórias', tipHead: (x) => `${Math.round(x)}º ano de carreira` });
+      GW.lineChart($('#cw2', wb), { series: K.map((c, i) => { let a = 0; return { name: c.driver.familyName, color: WCOL[i], pts: c.seasons.map((s, k) => [k + 1, (a += s.pts)]) }; }), legend: true, height: 260, xFmt: (v) => 'Ano ' + Math.round(v), unit: 'pts', yMin0: true, tipHead: (x) => `${Math.round(x)}º ano de carreira` });
+    }).catch(() => { ['cw1', 'cw2'].forEach((k) => { const n = $('#' + k, wb); if (n) n.innerHTML = '<p class="muted" style="padding:14px">Gráfico indisponível agora (limite de consultas). Atualize em alguns segundos.</p>'; }); });
   }
 })();

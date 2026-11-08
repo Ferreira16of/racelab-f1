@@ -802,3 +802,7 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .pk-chip b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pk-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media(max-width:700px){.pk-chip{flex:1 1 100%;min-width:0}.pk-presets{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:4px}.pk-presets .chip{flex:none}.page-head .seg{width:100%}.page-head .seg button{flex:1}}
+.cw-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.cw-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--c);border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.04),transparent)}
+.cw-card .avatar{width:64px;height:64px;flex:none;font-size:15px}
+.cw-card b{display:block;font:700 17px/1.2 var(--disp)}.cw-card small{color:var(--tx-2);font-size:12.5px}
