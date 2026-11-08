@@ -778,7 +778,12 @@ footer .sup-link{color:inherit;text-decoration:underline}
 @media(max-width:1240px){.lang-b{height:44px;padding:0 12px}.lang{margin-left:auto}.lang+.sup-link{margin-left:0!important}}
 @media(max-width:700px){.lang-b{padding:0 10px;gap:5px}.lang-b svg:first-child{display:none}.lang-m{right:-4px;min-width:220px}}
 /* barra de navegação mais compacta em telas médias, para caber tudo */
-@media(min-width:1241px) and (max-width:1499px){.nav-in{gap:10px}.nav-links{margin-left:4px}.nav-links a{padding:8px 6px;font-size:12.5px}.nav-links a.on::after{left:6px;right:6px}}
 
 /* texto para buscadores: fica no HTML, mas não aparece antes do app carregar */
 .seo-static{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* barra superior: encaixe em cada largura */
+@media(min-width:1241px) and (max-width:1359px){.nav-in{gap:10px}.nav-links{margin-left:2px}.nav-links a{padding:8px 7px;font-size:12.5px}.nav-links a.on::after{left:7px;right:7px}}
+/* menu em tablet: 10 atalhos em 5 colunas (2 linhas cheias) */
+@media(min-width:701px) and (max-width:1240px){.nav-links{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important}.nav-links a{font-size:14px!important;min-height:84px;padding:12px 6px!important}}
+@media(min-width:861px){.quick{grid-template-columns:repeat(3,1fr)}}

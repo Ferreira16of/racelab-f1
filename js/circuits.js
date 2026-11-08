@@ -15,7 +15,7 @@
   let GEO = null;
   /** circuitId -> geometria, sem depender da API de sessões (usa a tabela data/circuit-keys.json) */
   const geoMap = () => (GEO = GEO || (async () => {
-    const map = new Map(), keys = await fetch('data/circuit-keys.json').then((r) => r.json()).catch(() => ({}));
+    const map = new Map(), keys = await fetch('/data/circuit-keys.json').then((r) => r.json()).catch(() => ({}));
     await Promise.all(Object.entries(keys).map(async ([id, key]) => { try { const mv = await GW.MV.circuit(key, GW.currentYear); if (mv) map.set(id, mv); } catch { /* sem miniatura */ } }));
     return map;
   })());
@@ -23,18 +23,7 @@
   GW.pages.circuits = async (p, el, tk) => {
     await J.init();
     if (p[0]) return detail(p[0], +p[1] || null, el, tk);
-    const years = await J.seasons(); const y = GW.store.get('circYear', 0);
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Pistas</span><h1>Circuitos</h1><p class="sub">Traçados reais com curvas numeradas, histórico de vencedores e melhores voltas dos circuitos usados nas últimas temporadas.</p></div>
-      <div class="row">${GW.ctl('cy', 'Temporada', '<option value="0">Todos os atuais</option>' + GW.options(years.map((v) => [v, v]), y))}<div class="ctl"><label for="cq">Buscar</label><input id="cq" type="search" placeholder="Circuito, cidade ou país"></div><div class="ctl"><label for="cf">Mostrar</label><select id="cf"><option value="all">Todos</option><option value="fav">Favoritos</option></select></div></div></div><div class="list-grid" id="cl">${GW.loading()}</div>`;
-    let list = [], idx = null;
-    const load = async () => { const yy = +$('#cy', el).value; GW.store.set('circYear', yy); $('#cl', el).innerHTML = GW.loading(); try { list = await J.circuits(yy || null); idx = await J.circuitIndex().catch(() => null); const geo = await geoMap(); list = list.filter((c) => geo.has(c.circuitId) && (!idx || idx.has(c.circuitId))); } catch (e) { $('#cl', el).innerHTML = GW.error(e); return; } if (GW.alive(tk)) draw(); };
-    const draw = () => {
-      const q = $('#cq', el).value.toLowerCase(), f = $('#cf', el).value === 'fav' ? favs() : null, yy = +$('#cy', el).value;
-      const rows = list.filter((c) => (c.circuitName + c.Location.locality + c.Location.country).toLowerCase().includes(q) && (!f || f.includes(c.circuitId)));
-      $('#cl', el).innerHTML = rows.length ? rows.map((c) => `<a class="pcard" href="#/circuits/${c.circuitId}${yy ? '/' + yy : ''}" style="border-left-color:var(--red)"><div class="avatar circ" data-cid="${esc(c.circuitId)}" data-ini="${esc(c.Location.locality.slice(0, 3).toUpperCase())}"></div><div style="min-width:0"><h3>${esc(c.circuitName)}</h3><p>${esc(c.Location.locality)}, ${esc(c.Location.country)}</p>${idx && idx.get(c.circuitId) ? `<p class="muted">${idx.get(c.circuitId).n} GPs · ${idx.get(c.circuitId).first === idx.get(c.circuitId).last ? idx.get(c.circuitId).first : idx.get(c.circuitId).first + '–' + idx.get(c.circuitId).last}</p>` : ''}</div>${favs().includes(c.circuitId) ? `<span class="fav on" style="margin-left:auto">${GW.ic('star')}</span>` : ''}</a>`).join('') : GW.empty('Nenhum circuito', 'Ajuste a busca ou os filtros.');
-      geoMap().then((g) => { if (!GW.alive(tk)) return; $$('.avatar.circ', el).forEach((a) => { const mv = g.get(a.dataset.cid); if (mv) { a.innerHTML = thumb(mv); a.classList.add('geo'); } }); });
-    };
-    $('#cy', el).onchange = load; $('#cq', el).oninput = U.debounce(draw, 120); $('#cf', el).onchange = draw; load();
+    GW.go('seasons');
   };
 
   async function detail(id, year, el, tk) {
@@ -42,12 +31,12 @@
     const races = races0.filter((r) => U.toDate(r.date, r.time) < Date.now());
     const c = all.find((x) => x.circuitId === id) || races[0]?.Circuit;
     if (!c) { el.innerHTML = GW.empty('Circuito não encontrado', 'Este circuito não existe.'); return; }
-    if (!races.length) { el.innerHTML = GW.empty('Circuito ainda sem GPs disputados', 'Assim que a primeira corrida acontecer, o traçado e o histórico aparecem aqui.') + '<p style="text-align:center"><a class="btn" href="#/circuits">← Todos os circuitos</a></p>'; return; }
+    if (!races.length) { el.innerHTML = GW.empty('Circuito ainda sem GPs disputados', 'Assim que a primeira corrida acontecer, o traçado e o histórico aparecem aqui.') + '<p style="text-align:center"><button class="btn" type="button" onclick="history.back()">&larr; Voltar</button></p>'; return; }
     const modern = races.filter((r) => +r.season >= 2023); // OpenF1 / geometria
     const yr = year && modern.some((r) => +r.season === year) ? year : modern.at(-1) ? +modern.at(-1).season : null;
     const isFav = favs().includes(id);
     el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Circuito</span><h1>${esc(c.circuitName)}</h1><p class="sub">${esc(c.Location.locality)}, ${esc(c.Location.country)} · ${races.length} Grandes Prêmios na história da categoria</p></div>
-      <div class="row"><button class="fav ${isFav ? 'on' : ''}" id="cfav" aria-label="Favoritar circuito" aria-pressed="${isFav}">${GW.ic('star')}</button>${modern.length ? GW.ctl('gy', 'Traçado/dados de', GW.options([...modern].reverse().map((r) => [r.season, r.season]), yr)) : ''}<a class="btn" href="#/circuits">← Todos</a></div></div>
+      <div class="row"><button class="fav ${isFav ? 'on' : ''}" id="cfav" aria-label="Favoritar circuito" aria-pressed="${isFav}">${GW.ic('star')}</button>${modern.length ? GW.ctl('gy', 'Traçado/dados de', GW.options([...modern].reverse().map((r) => [r.season, r.season]), yr)) : ''}<button class="btn" type="button" onclick="history.back()">&larr; Voltar</button></div></div>
     <div class="grid g-main"><div class="card"><div class="card-h"><h2>Traçado</h2><span id="mapchip"></span></div><div id="map">${GW.loading('Carregando geometria do traçado…')}</div><div id="mapx" class="mt-s"></div></div>
       <div style="display:flex;flex-direction:column;gap:16px;min-width:0"><div class="card"><div class="card-h"><h2>Ficha técnica</h2></div><dl class="kv" id="spec"><dt>Nome oficial</dt><dd>${esc(c.circuitName)}</dd><dt>Localização</dt><dd>${esc(c.Location.locality)}</dd><dt>País</dt><dd>${esc(c.Location.country)}</dd><dt>Coordenadas</dt><dd>${(+c.Location.lat).toFixed(3)}, ${(+c.Location.long).toFixed(3)}</dd><dt>GPs disputados</dt><dd>${races.length}</dd><dt>Primeiro / último GP</dt><dd>${races[0].season} / ${races.at(-1).season}</dd></dl></div>
       <div class="card"><div class="card-h"><h2>Recordes documentados</h2></div><div id="rec">${GW.loading()}</div></div></div></div>
@@ -77,7 +66,7 @@
     if (!yr) { $('#map', el).innerHTML = GW.empty('Sem geometria disponível', 'Este circuito não tem traçado disponível.'); return; }
     const race = modern.find((r) => +r.season === yr);
     let meeting, mv;
-    try { const keys = await fetch('data/circuit-keys.json').then((r) => r.json()).catch(() => ({})); mv = keys[id] ? await GW.MV.circuit(keys[id], yr) : null; } catch (e) { $('#map', el).innerHTML = GW.error(e); return; }
+    try { const keys = await fetch('/data/circuit-keys.json').then((r) => r.json()).catch(() => ({})); mv = keys[id] ? await GW.MV.circuit(keys[id], yr) : null; } catch (e) { $('#map', el).innerHTML = GW.error(e); return; }
     if (!GW.alive(tk)) return;
     if (!mv) { $('#map', el).innerHTML = GW.empty('Geometria indisponível', 'O traçado deste circuito ainda não está disponível.'); return; }
     const pts = mv.x.map((x, i) => [x, mv.y[i]]);

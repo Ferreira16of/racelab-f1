@@ -75,5 +75,68 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/calendario/:path*",
+      "destination": "/calendario"
+    },
+    {
+      "source": "/resultados/:path*",
+      "destination": "/resultados"
+    },
+    {
+      "source": "/pilotos/:path*",
+      "destination": "/pilotos"
+    },
+    {
+      "source": "/equipes/:path*",
+      "destination": "/equipes"
+    },
+    {
+      "source": "/campeonatos/:path*",
+      "destination": "/campeonatos"
+    },
+    {
+      "source": "/telemetry-lab/:path*",
+      "destination": "/telemetry-lab"
+    },
+    {
+      "source": "/strategy-lab/:path*",
+      "destination": "/strategy-lab"
+    },
+    {
+      "source": "/driver-wars/:path*",
+      "destination": "/driver-wars"
+    },
+    {
+      "source": "/ao-vivo/:path*",
+      "destination": "/ao-vivo"
+    },
+    {
+      "source": "/patrocinio/:path*",
+      "destination": "/patrocinio"
+    },
+    {
+      "source": "/circuitos/:path+",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/temporadas",
+      "destination": "/calendario",
+      "permanent": true
+    },
+    {
+      "source": "/temporadas/:path*",
+      "destination": "/calendario/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/circuitos",
+      "destination": "/calendario",
+      "permanent": false
+    }
   ]
 }

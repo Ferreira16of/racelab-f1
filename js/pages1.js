@@ -104,13 +104,12 @@
     <h2 class="mt" style="margin-bottom:12px">Análises</h2>
     <div class="quick">
       <a href="#/telemetry"><span>${GW.ic('pulse')}</span><b>Telemetry Lab</b><span>Compare voltas: velocidade, freio, acelerador e delta.</span></a>
-      <a href="#/circuits"><span>${GW.ic('map')}</span><b>Circuitos</b><span>Traçados reais, curvas e histórico por pista.</span></a>
       <a href="#/strategy"><span>${GW.ic('timer')}</span><b>Strategy Lab</b><span>Simule paradas, pneus e Safety Car.</span></a>
       <a href="#/wars"><span>${GW.ic('swords')}</span><b>Driver Wars</b><span>Compare pilotos por indicadores.</span></a>
     </div>
     <div class="card-h mt"><h2>Calendário ${y}</h2><a class="btn sm" href="#/seasons/${y}">Ver completo</a></div>
     <div class="cal">${st.map(({ r, s }) => `<a class="race-card ${s} ${r === nextR ? 'next' : ''}" href="#/seasons/${y}/${r.round}"><div class="rd"><span>R${r.round}</span><span>${esc(fmtDay(toDate(r.date)))}</span></div><h3>${esc(r.raceName.replace(' Grand Prix', ' GP'))}</h3><div class="loc">${esc(r.Circuit.Location.locality)}, ${esc(r.Circuit.Location.country)}</div><div>${s === 'done' ? '<span class="chip">concluída</span>' : r === nextR ? '<span class="chip next">próxima</span>' : '<span class="chip">futura</span>'}${r.Sprint ? ' <span class="chip red">sprint</span>' : ''}</div></a>`).join('')}</div>`;
-    if (nextR) (async () => { try { const keys = await fetch('data/circuit-keys.json').then((r) => r.json()); const key = keys[nextR.Circuit.circuitId]; if (!key) return; const mv = await GW.MV.circuit(key, y).catch(() => null) || await GW.MV.circuit(key, y - 1).catch(() => null); const h = $('#htrack'); if (!mv || !h || !GW.alive(tk)) return; const r = ((mv.rotation || 0) * Math.PI) / 180, cs = Math.cos(r), sn = Math.sin(r), P = mv.x.map((x, i) => [x * cs - mv.y[i] * sn, -(x * sn + mv.y[i] * cs)]), xs = P.map((q) => q[0]), ys = P.map((q) => q[1]), x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0, hh = Math.max(...ys) - y0, m = Math.max(w, hh) || 1, pad = m * 0.08; h.innerHTML = `<svg viewBox="0 0 ${(w + pad * 2).toFixed(0)} ${(hh + pad * 2).toFixed(0)}"><path d="M${P.map((q) => `${(q[0] - x0 + pad).toFixed(0)} ${(q[1] - y0 + pad).toFixed(0)}`).join('L')}Z" fill="none" stroke="#e10600" stroke-opacity=".28" stroke-width="${(m / 12).toFixed(0)}" stroke-linejoin="round"/><path d="M${P.map((q) => `${(q[0] - x0 + pad).toFixed(0)} ${(q[1] - y0 + pad).toFixed(0)}`).join('L')}Z" fill="none" stroke="#f1f3fa" stroke-width="${(m / 50).toFixed(0)}" stroke-linejoin="round" stroke-linecap="round"/></svg>`; } catch { /* sem traçado */ } })();
+    if (nextR) (async () => { try { const keys = await fetch('/data/circuit-keys.json').then((r) => r.json()); const key = keys[nextR.Circuit.circuitId]; if (!key) return; const mv = await GW.MV.circuit(key, y).catch(() => null) || await GW.MV.circuit(key, y - 1).catch(() => null); const h = $('#htrack'); if (!mv || !h || !GW.alive(tk)) return; const r = ((mv.rotation || 0) * Math.PI) / 180, cs = Math.cos(r), sn = Math.sin(r), P = mv.x.map((x, i) => [x * cs - mv.y[i] * sn, -(x * sn + mv.y[i] * cs)]), xs = P.map((q) => q[0]), ys = P.map((q) => q[1]), x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0, hh = Math.max(...ys) - y0, m = Math.max(w, hh) || 1, pad = m * 0.08; h.innerHTML = `<svg viewBox="0 0 ${(w + pad * 2).toFixed(0)} ${(hh + pad * 2).toFixed(0)}"><path d="M${P.map((q) => `${(q[0] - x0 + pad).toFixed(0)} ${(q[1] - y0 + pad).toFixed(0)}`).join('L')}Z" fill="none" stroke="#e10600" stroke-opacity=".28" stroke-width="${(m / 12).toFixed(0)}" stroke-linejoin="round"/><path d="M${P.map((q) => `${(q[0] - x0 + pad).toFixed(0)} ${(q[1] - y0 + pad).toFixed(0)}`).join('L')}Z" fill="none" stroke="#f1f3fa" stroke-width="${(m / 50).toFixed(0)}" stroke-linejoin="round" stroke-linecap="round"/></svg>`; } catch { /* sem traçado */ } })();
     let stop;
     if (liveS || nextSess) {
       const hms = (ms) => { const t = Math.max(0, Math.round(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60); return `${h ? h + ':' + String(m).padStart(2, '0') : m}:${String(t % 60).padStart(2, '0')}`; };
@@ -217,7 +216,7 @@
     if (!avail.length) avail.push(['race', 'Corrida']);
     const ses = avail.find((a) => a[0] === p[2]) ? p[2] : avail[0][0];
     GW.setCtx({ year: y, round: +round, session: ses });
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Resultados</span><h1>${esc(race?.raceName || 'Resultados')}</h1><p class="sub">${race ? `${esc(race.Circuit.circuitName)} · ${esc(fmtDay(toDate(race.date)))} ${y}` : ''}</p></div>
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Resultados</span><h1>${esc(race?.raceName || 'Resultados')}</h1><p class="sub">${race ? `<a href="#/circuits/${race.Circuit.circuitId}/${y}">${esc(race.Circuit.circuitName)}</a> · ${esc(fmtDay(toDate(race.date)))} ${y}` : ''}</p></div>
       <div class="row">${GW.ctl('ry', 'Temporada', GW.options(years.map((v) => [v, v]), y))}${GW.ctl('rr', 'Grande Prêmio', GW.options(open.map((r) => [r.round, `R${r.round} · ${r.raceName.replace(' Grand Prix', '')}`]), round))}${GW.ctl('rs', 'Sessão', GW.options(avail, ses))}</div></div>
       <div class="tabs" id="rtabs">${[['res', 'Resultado', jkind(ses)], ['pit', 'Pit stops', ses === 'race' && y >= 2011], ['tyre', 'Pneus (stints)', ses === 'race' && modern], ['laps', 'Melhores voltas e setores', modern]].filter((t) => t[2]).map((t) => `<button data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
       <div id="rbody">${GW.loading()}</div>`;
@@ -295,7 +294,7 @@
     return s ? { m, s } : { err: 'Dados detalhados desta sessão ainda não estão disponíveis.' };
   }
   /** resultado pré-gerado (melhores voltas e stints): abre na hora e funciona mesmo com sessão ao vivo em andamento */
-  const snapshot = (y, r, ses) => fetch(`data/snap/${y}-${r}-${ses}.json`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+  const snapshot = (y, r, ses) => fetch(`/data/snap/${y}-${r}-${ses}.json`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
   async function tabTyre(body, y, r, ses, race, tk) {
     const snap = await snapshot(y, r, 'race');
     let o, st, dr;

@@ -191,7 +191,7 @@
   }));
   let STATIC = null;
   GW.archivePhoto = async (d) => {
-    STATIC = STATIC || fetch('data/driver-photos.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+    STATIC = STATIC || fetch('/data/driver-photos.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
     const known = (await STATIC)[d.driverId]; // pré-carregado: resposta instantânea, sem limite de consultas
     if (known) return known;
     const sf = await GW.statsf1Photo(d); if (sf) return sf; // arquivo histórico (statsf1), sem limite de consultas

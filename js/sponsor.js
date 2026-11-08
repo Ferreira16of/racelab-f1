@@ -6,7 +6,7 @@
   const getJ = (u) => fetch(u, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
   GW.pages.sponsor = async (p, el, tk) => {
-    const cfg = (await getJ('data/sponsor.json')) || {};
+    const cfg = (await getJ('/data/sponsor.json')) || {};
     if (!GW.alive(tk)) return;
     const mail = cfg.email || '', tg = cfg.telegram || '';
     const faq = [

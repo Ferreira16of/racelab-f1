@@ -94,12 +94,14 @@
     const lead = raw.match(/^[\s·•|]*/)[0], trail = raw.match(/[\s·•|]*$/)[0], s = raw.slice(lead.length, raw.length - trail.length);
     if (!s || !/[A-Za-zÀ-ÿ]/.test(s)) return raw;
     const L = I.lang, m = M[L];
+    const s0 = s, sr = s.replace(/RB F1 Team/g, 'Racing Bulls');
     let out = m.get(s);
     if (out == null && L !== 'pt') for (const [re, f] of PAT) { const x = re.exec(s); if (x) { const r = f(x)[L]; if (r) { out = r; break; } } }
     if (out == null) { const g = /^(GP .+?|.+? Grand Prix) (\d{4})$/.exec(s); if (g) { const b = m.get(g[1]); if (b != null) out = `${b} ${g[2]}`; } }
     if (out == null && s.includes(', ')) { const parts = s.split(', '), tr = parts.map((p) => m.get(p)); if (tr.some((x) => x != null)) out = parts.map((p, i) => tr[i] ?? p).join(', '); }
     if (out == null && L === 'pt') { const mm = /^(.+?) Grand Prix\b(.*)$/.exec(s); if (mm && M.pt.get(mm[1] + ' Grand Prix')) out = M.pt.get(mm[1] + ' Grand Prix') + mm[2]; }
-    return out == null ? raw : lead + out + trail;
+    if (out == null) return sr !== s0 ? lead + sr + trail : raw;
+    return lead + out + trail;
   };
   I.tr = translate;
 

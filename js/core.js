@@ -177,12 +177,12 @@
   };
 
   /* ---------- router ---------- */
-  const NAV = [['home', 'Home', 'home'], ['seasons', 'Temporadas', 'cal'], ['results', 'Resultados', 'flag'], ['drivers', 'Pilotos', 'user'], ['teams', 'Equipes', 'users'], ['championships', 'Campeonatos', 'trophy'], ['telemetry', 'Telemetry Lab', 'pulse'], ['strategy', 'Strategy Lab', 'timer'], ['circuits', 'Circuitos', 'map'], ['wars', 'Driver Wars', 'swords'], ['live', 'Ao Vivo', 'play']];
+  const NAV = [['home', 'Home', 'home'], ['seasons', 'Calendário', 'cal'], ['results', 'Resultados', 'flag'], ['drivers', 'Pilotos', 'user'], ['teams', 'Equipes', 'users'], ['championships', 'Campeonatos', 'trophy'], ['telemetry', 'Telemetry Lab', 'pulse'], ['strategy', 'Strategy Lab', 'timer'], ['wars', 'Driver Wars', 'swords'], ['live', 'Ao Vivo', 'play']];
   let token = 0, cleanup = null;
   /* páginas pesadas só são baixadas quando visitadas */
   const LAZY = { drivers: 'pages2', teams: 'pages2', wars: 'pages2', telemetry: 'telemetry', strategy: 'strategy', circuits: 'circuits', live: 'live', sponsor: 'sponsor' };
   const loaded = {};
-  const loadJs = (n) => (loaded[n] = loaded[n] || new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = `js/${n}.js`; sc.onload = res; sc.onerror = () => { delete loaded[n]; rej(new Error('Não foi possível carregar esta página. Verifique sua conexão.')); }; document.head.appendChild(sc); }));
+  const loadJs = (n) => (loaded[n] = loaded[n] || new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = `/js/${n}.js`; sc.onload = res; sc.onerror = () => { delete loaded[n]; rej(new Error('Não foi possível carregar esta página. Verifique sua conexão.')); }; document.head.appendChild(sc); }));
   const DESC = { home: 'Resultados, classificação, próximo GP e destaques da temporada de Fórmula 1.', seasons: 'Calendário completo da Fórmula 1 por temporada, com sessões e resultados.', results: 'Resultados de corridas, classificação, sprint, pit stops, pneus e melhores voltas da Fórmula 1.', drivers: 'Perfis de pilotos de Fórmula 1: vitórias, pódios, poles, títulos e comparação com companheiros.', teams: 'Equipes de Fórmula 1: pilotos, pontos, vitórias e evolução no campeonato de construtores.', championships: 'Classificação de pilotos e construtores da Fórmula 1 e lista de campeões mundiais.', telemetry: 'Telemetry Lab: compare voltas da Fórmula 1 com velocidade, freio, acelerador e delta de tempo.', strategy: 'Strategy Lab: simule estratégias de pit stop, pneus e Safety Car com intervalos de incerteza.', circuits: 'Circuitos: traçado real, curvas, histórico de vencedores e recordes dos circuitos de F1.', wars: 'Driver Wars: compare pilotos de Fórmula 1 lado a lado, na mesma temporada ou na carreira.', sponsor: 'Patrocine o RaceLab: espaços para marcas, formatos de parceria e contato para propostas.', live: 'Cronometragem ao vivo das sessões de Fórmula 1: posições, tempos, intervalos, pneus e grid de largada antes da corrida.' };
   const setMeta = (name) => { const d = DESC[name] || DESC.home; [['meta[name=description]'], ['meta[property="og:description"]'], ['meta[name="twitter:description"]']].forEach(([q]) => { const m = document.querySelector(q); if (m) m.content = d; }); };
   GW.alive = (t) => t === token;
@@ -199,15 +199,26 @@
     const c = GW.ctx, el = $('#navctx'); if (!el) return;
     el.innerHTML = c.year ? `<span class="chip red" title="Temporada em contexto">${c.year}${c.round ? ' · R' + c.round : ''}</span>` : '';
   }
+  /* endereços limpos: /pilotos/2026/norris em vez de /#/drivers/2026/norris (o hash continua valendo como entrada interna) */
+  const SLUG = { seasons: 'calendario', results: 'resultados', drivers: 'pilotos', teams: 'equipes', championships: 'campeonatos', telemetry: 'telemetry-lab', strategy: 'strategy-lab', circuits: 'circuitos', wars: 'driver-wars', live: 'ao-vivo', sponsor: 'patrocinio' };
+  const BYSLUG = Object.fromEntries(Object.entries(SLUG).map(([k, v]) => [v, k]));
+  const readParts = () => {
+    const h = location.hash.replace(/^#\/?/, '');
+    if (h) return h.split('/').map(decodeURIComponent).filter(Boolean);
+    const p = location.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    return p.length && BYSLUG[p[0]] ? [BYSLUG[p[0]], ...p.slice(1)] : [];
+  };
+  const cleanUrl = (parts) => (parts.length && parts[0] !== 'home' ? '/' + [SLUG[parts[0]] || parts[0], ...parts.slice(1)].map(encodeURIComponent).join('/') : '/');
   async function route() {
-    const parts = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent).filter(Boolean);
+    const parts = readParts();
     const name = GW.pages[parts[0]] || LAZY[parts[0]] ? parts[0] : 'home';
     const params = parts.slice(1);
+    try { history.replaceState(null, '', cleanUrl(parts[0] === name ? parts : [])); } catch { /* sem history */ }
     const my = ++token, main = $('#app');
     try { if (window.va) window.va('pageview', { route: parts.length > 1 ? `/${name}/[...]` : `/${name === 'home' ? '' : name}`, path: '/' + (name === 'home' ? '' : parts.join('/')) }); } catch { /* sem métricas */ }
     if (cleanup) { try { cleanup(); } catch { /* noop */ } cleanup = null; }
     renderNav(name); $('#navlinks').classList.remove('open');
-    const titles = Object.fromEntries(NAV.map((n) => [n[0], n[1]])); titles.sponsor = 'Patrocínio';
+    const titles = Object.fromEntries(NAV.map((n) => [n[0], n[1]])); titles.sponsor = 'Patrocínio'; titles.circuits = 'Circuitos';
     document.title = name === 'home' ? 'RaceLab — Resultados, telemetria e análise de Fórmula 1' : `${titles[name]} — RaceLab`; setMeta(name);
     main.innerHTML = GW.skeleton();
     window.scrollTo({ top: 0 });
@@ -227,13 +238,13 @@
     const a = box && box.querySelector('a[href^="#/"]');
     if (a) { e.preventDefault(); location.hash = a.getAttribute('href'); }
   });
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', () => { if (location.hash) route(); });
+  window.addEventListener('popstate', () => { if (!location.hash) route(); });
   document.addEventListener('DOMContentLoaded', async () => {
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
     $('#tzlabel').textContent = `${tzNice()} (${tzShort()})`;
     renderCtx();
     window.addEventListener('rl-lang', () => { $('#tzlabel').textContent = `${tzNice()} (${tzShort()})`; });
-    if (!location.hash) location.hash = '#/home';
     route();
     // sessão ao vivo: marca o menu e abre a tela Ao vivo uma vez por visita
     const liveWatch = async () => {
@@ -241,7 +252,7 @@
         const now = Date.now(), live = (await GW.J.schedule(GW.currentYear)).some((r) => GW.weekend(r).some((x) => now >= +x.start && now <= +x.end));
         if (live !== !!GW.liveOn) { GW.liveOn = live; renderNav(navCur); }
         let seen = false; try { seen = sessionStorage.getItem('rlLiveOpen') === '1'; } catch { /* sem sessionStorage */ }
-        if (live && !seen && /^#?\/?(home)?$/.test(location.hash)) { try { sessionStorage.setItem('rlLiveOpen', '1'); } catch { /* ok */ } GW.go('live'); }
+        if (live && !seen && (readParts().length === 0 || readParts()[0] === 'home')) { try { sessionStorage.setItem('rlLiveOpen', '1'); } catch { /* ok */ } GW.go('live'); }
       } catch { /* sem calendário */ }
     };
     liveWatch(); setInterval(liveWatch, 60000);
