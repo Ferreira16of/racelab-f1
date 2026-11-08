@@ -705,3 +705,14 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .hl-grp:first-child .hl-t{border-color:rgba(225,6,0,.35);background:linear-gradient(180deg,rgba(225,6,0,.07),transparent)}
 @media(max-width:640px){.hl-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.hl-t{padding:12px}.hl-t b{font-size:22px}}
 @media(max-width:360px){.hl-row{grid-template-columns:minmax(0,1fr)}}
+
+/* Patrocínio */
+.sp-two2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sp-f textarea,.sp-f select{width:100%;background:var(--card-2);border:1px solid var(--line-2);border-radius:10px;padding:11px 12px;color:var(--tx);font:inherit;min-height:44px}
+.sp-f textarea{resize:vertical;line-height:1.5}
+.sp-f textarea:focus,.sp-f select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-dim)}
+.sp-f input.bad,.sp-f textarea.bad{border-color:#ff5a50}
+.sp-direct{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:14px}
+.sp-direct span{color:var(--tx-2)}.sp-direct a:not(.btn){color:inherit;text-decoration:underline;word-break:break-all}
+.sp-steps b{flex:none}
+@media(max-width:640px){.sp-two2{grid-template-columns:minmax(0,1fr)}}

@@ -180,10 +180,10 @@
   const NAV = [['home', 'Home', 'home'], ['seasons', 'Temporadas', 'cal'], ['results', 'Resultados', 'flag'], ['drivers', 'Pilotos', 'user'], ['teams', 'Equipes', 'users'], ['championships', 'Campeonatos', 'trophy'], ['telemetry', 'Telemetry Lab', 'pulse'], ['strategy', 'Strategy Lab', 'timer'], ['circuits', 'Circuit Explorer', 'map'], ['wars', 'Driver Wars', 'swords'], ['live', 'Ao Vivo', 'play']];
   let token = 0, cleanup = null;
   /* páginas pesadas só são baixadas quando visitadas */
-  const LAZY = { drivers: 'pages2', teams: 'pages2', wars: 'pages2', telemetry: 'telemetry', strategy: 'strategy', circuits: 'circuits', live: 'live', support: 'support' };
+  const LAZY = { drivers: 'pages2', teams: 'pages2', wars: 'pages2', telemetry: 'telemetry', strategy: 'strategy', circuits: 'circuits', live: 'live', sponsor: 'sponsor' };
   const loaded = {};
   const loadJs = (n) => (loaded[n] = loaded[n] || new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = `js/${n}.js`; sc.onload = res; sc.onerror = () => { delete loaded[n]; rej(new Error('Não foi possível carregar esta página. Verifique sua conexão.')); }; document.head.appendChild(sc); }));
-  const DESC = { home: 'Resultados, classificação, próximo GP e destaques da temporada de Fórmula 1.', seasons: 'Calendário completo da Fórmula 1 por temporada, com sessões e resultados.', results: 'Resultados de corridas, classificação, sprint, pit stops, pneus e melhores voltas da Fórmula 1.', drivers: 'Perfis de pilotos de Fórmula 1: vitórias, pódios, poles, títulos e comparação com companheiros.', teams: 'Equipes de Fórmula 1: pilotos, pontos, vitórias e evolução no campeonato de construtores.', championships: 'Classificação de pilotos e construtores da Fórmula 1 e lista de campeões mundiais.', telemetry: 'Telemetry Lab: compare voltas da Fórmula 1 com velocidade, freio, acelerador e delta de tempo.', strategy: 'Strategy Lab: simule estratégias de pit stop, pneus e Safety Car com intervalos de incerteza.', circuits: 'Circuit Explorer: traçado real, curvas, histórico de vencedores e recordes dos circuitos de F1.', wars: 'Driver Wars: compare pilotos de Fórmula 1 lado a lado, na mesma temporada ou na carreira.', support: 'Apoie o RaceLab e apareça no Mural de Apoiadores, ou fale sobre patrocínio.', live: 'Cronometragem ao vivo das sessões de Fórmula 1: posições, tempos, intervalos, pneus e grid de largada antes da corrida.' };
+  const DESC = { home: 'Resultados, classificação, próximo GP e destaques da temporada de Fórmula 1.', seasons: 'Calendário completo da Fórmula 1 por temporada, com sessões e resultados.', results: 'Resultados de corridas, classificação, sprint, pit stops, pneus e melhores voltas da Fórmula 1.', drivers: 'Perfis de pilotos de Fórmula 1: vitórias, pódios, poles, títulos e comparação com companheiros.', teams: 'Equipes de Fórmula 1: pilotos, pontos, vitórias e evolução no campeonato de construtores.', championships: 'Classificação de pilotos e construtores da Fórmula 1 e lista de campeões mundiais.', telemetry: 'Telemetry Lab: compare voltas da Fórmula 1 com velocidade, freio, acelerador e delta de tempo.', strategy: 'Strategy Lab: simule estratégias de pit stop, pneus e Safety Car com intervalos de incerteza.', circuits: 'Circuit Explorer: traçado real, curvas, histórico de vencedores e recordes dos circuitos de F1.', wars: 'Driver Wars: compare pilotos de Fórmula 1 lado a lado, na mesma temporada ou na carreira.', sponsor: 'Patrocine o RaceLab: espaços para marcas, formatos de parceria e contato para propostas.', live: 'Cronometragem ao vivo das sessões de Fórmula 1: posições, tempos, intervalos, pneus e grid de largada antes da corrida.' };
   const setMeta = (name) => { const d = DESC[name] || DESC.home; [['meta[name=description]'], ['meta[property="og:description"]'], ['meta[name="twitter:description"]']].forEach(([q]) => { const m = document.querySelector(q); if (m) m.content = d; }); };
   GW.alive = (t) => t === token;
   GW.go = (path) => { location.hash = '#/' + path.replace(/^#?\/?/, ''); };
@@ -207,7 +207,7 @@
     try { if (window.va) window.va('pageview', { route: parts.length > 1 ? `/${name}/[...]` : `/${name === 'home' ? '' : name}`, path: '/' + (name === 'home' ? '' : parts.join('/')) }); } catch { /* sem métricas */ }
     if (cleanup) { try { cleanup(); } catch { /* noop */ } cleanup = null; }
     renderNav(name); $('#navlinks').classList.remove('open');
-    const titles = Object.fromEntries(NAV.map((n) => [n[0], n[1]])); titles.support = 'Apoie';
+    const titles = Object.fromEntries(NAV.map((n) => [n[0], n[1]])); titles.sponsor = 'Patrocínio';
     document.title = name === 'home' ? 'RaceLab — Resultados, telemetria e análise de Fórmula 1' : `${titles[name]} — RaceLab`; setMeta(name);
     main.innerHTML = GW.skeleton();
     window.scrollTo({ top: 0 });
@@ -232,7 +232,6 @@
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
     $('#tzlabel').textContent = `${tzNice()} (${tzShort()})`;
     renderCtx();
-    fetch('data/support.json', { cache: 'no-cache' }).then((r) => r.json()).then((c) => { if (c.public === true) document.querySelectorAll('.sup-link').forEach((a) => (a.hidden = false)); }).catch(() => {});
     if (!location.hash) location.hash = '#/home';
     route();
     // sessão ao vivo: marca o menu e abre a tela Ao vivo uma vez por visita
