@@ -208,7 +208,7 @@
   GW.driverPhoto = (d, year, teamIds) => {
     const key = `${year}:${d.driverId}:${(teamIds || []).join(',')}`;
     return (PHC[key] = PHC[key] || (async () => {
-      const ck = 'ph:' + key, saved = GW.store.get(ck, undefined); if (saved !== undefined && saved !== null) return saved || null;
+      const ck = 'ph2:' + key, saved = GW.store.get(ck, undefined); if (saved !== undefined && saved !== null) return saved || null;
       let url = null;
       if (year >= 2024) {
         const code = slug((d.givenName || '').split(' ')[0]).slice(0, 3) + slug(d.familyName).slice(0, 3) + '01';

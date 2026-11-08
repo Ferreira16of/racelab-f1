@@ -207,13 +207,13 @@
         <div class="pk-presets" id="pre"></div></div><div id="wb" class="mt"></div>`;
     $$('.seg button', el).forEach((b) => (b.onclick = () => { GW.store.set('warsMode', b.dataset.m); GW.reload(); }));
     const wy = $('#wy', el); if (wy) wy.onchange = (e) => { GW.store.set('warsYear', +e.target.value); GW.store.set('warsPicks', []); GW.go(`wars/${e.target.value}`); };
-    const av = (c) => `<div class="avatar sm" data-id="${esc(c.d.driverId)}" data-given="${esc(c.d.givenName)}" data-family="${esc(c.d.familyName)}" data-dob="${esc(c.d.dateOfBirth || '')}" data-year="${season ? y : 0}" data-teams="${(c.teams || []).map((t) => t.constructorId).join(',')}">${esc(c.d.code || c.d.familyName.slice(0, 3).toUpperCase())}</div>`;
+    const av = (c) => `<div class="avatar sm" data-id="${esc(c.d.driverId)}" data-given="${esc(c.d.givenName)}" data-family="${esc(c.d.familyName)}" data-dob="${esc(c.d.dateOfBirth || '')}" data-year="${season ? y : (c.teams && c.teams.length ? GW.currentYear : 0)}" data-teams="${(c.teams || []).map((t) => t.constructorId).join(',')}">${esc(c.d.code || c.d.familyName.slice(0, 3).toUpperCase())}</div>`;
     const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1), stub = (id) => ({ d: { driverId: id, givenName: '', familyName: id.split('_').slice(-1).map(cap).join('') }, teams: [] });
     const save = () => { GW.store.set(season ? 'warsPicks' : 'warsCareer', picks); GW.setCtx({ drivers: picks }); };
     const run = () => { save(); drawChips(); drawPresets(); (season ? seasonWar : careerWar)($('#wb', el), picks, sd, y, tk); };
     const set = (ids) => { picks = ids.filter((id, i, a) => a.indexOf(id) === i).slice(0, MAX); run(); };
     const closeRes = () => { res.hidden = true; act = -1; };
-    const add = (id) => { if (picks.includes(id)) return GW.toast('Esse piloto já está na comparação'); if (picks.length >= MAX) return GW.toast(`Máximo de ${MAX} pilotos: remova um para adicionar outro`); picks = [...picks, id]; q.value = ''; closeRes(); run(); };
+    const add = (id) => { if (picks.includes(id)) return GW.toast('Esse piloto já está na comparação'); if (picks.length >= MAX) return GW.toast(`Máximo de ${MAX} pilotos: remova um para adicionar outro`); picks = [...picks, id]; enrich(id); q.value = ''; closeRes(); run(); };
     const drawChips = () => {
       $('#chips', el).innerHTML = picks.length ? picks.map((id, i) => { const c = find(id) || stub(id); return `<span class="pk-chip" style="--c:${WC[i]}">${av(c)}<b>${esc(GW.fullName(c.d))}</b>${c.teams && c.teams[0] ? `<small>${esc(c.teams[0].name)}</small>` : ''}<button data-rm="${esc(id)}" aria-label="Remover ${esc(GW.fullName(c.d))}">${GW.ic('x')}</button></span>`; }).join('') + (picks.length < MAX ? `<span class="pk-hint">+ ${MAX - picks.length} vaga${MAX - picks.length > 1 ? 's' : ''}</span>` : '') : '<span class="pk-hint">Nenhum piloto escolhido — use a busca acima.</span>';
       $$('[data-rm]', el).forEach((b) => (b.onclick = () => { picks = picks.filter((x) => x !== b.dataset.rm); run(); }));
@@ -254,8 +254,12 @@
       if (GW.alive(tk)) { drawChips(); if (!res.hidden) drawRes(); }
     };
     q.addEventListener('focus', loadAll);
+    const enrich = (id) => { // equipe atual (se ainda corre): dá a foto recente certa
+      if (season) return; const c = find(id); if (!c || c.teams.length || c.tried) return; c.tried = true;
+      J.raw(`current/drivers/${id}/constructors.json`).then((d) => { const t = d.ConstructorTable.Constructors; if (t.length && GW.alive(tk)) { c.teams = t; drawChips(); } }).catch(() => {});
+    };
     if (!season) { // dados dos pilotos já escolhidos (nome e foto certos na hora)
-      picks.filter((id) => !find(id)).forEach((id) => J.raw(`drivers/${id}.json`).then((d) => { const x = d.DriverTable.Drivers[0]; if (x && !find(id) && GW.alive(tk)) { cands.push({ d: x, teams: [], pts: 0 }); drawChips(); } }).catch(() => {}));
+      picks.forEach((id) => { if (find(id)) return enrich(id); J.raw(`drivers/${id}.json`).then((d) => { const x = d.DriverTable.Drivers[0]; if (x && !find(id) && GW.alive(tk)) { cands.push({ d: x, teams: [], pts: 0 }); drawChips(); enrich(id); } }).catch(() => {}); });
     }
     drawChips(); drawPresets(); run();
   };
