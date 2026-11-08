@@ -779,3 +779,6 @@ footer .sup-link{color:inherit;text-decoration:underline}
 @media(max-width:700px){.lang-b{padding:0 10px;gap:5px}.lang-b svg:first-child{display:none}.lang-m{right:-4px;min-width:220px}}
 /* barra de navegação mais compacta em telas médias, para caber tudo */
 @media(min-width:1241px) and (max-width:1499px){.nav-in{gap:10px}.nav-links{margin-left:4px}.nav-links a{padding:8px 6px;font-size:12.5px}.nav-links a.on::after{left:6px;right:6px}}
+
+/* texto para buscadores: fica no HTML, mas não aparece antes do app carregar */
+.seo-static{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
