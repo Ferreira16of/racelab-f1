@@ -1,5 +1,5 @@
 /* RaceLab — service worker: sempre tenta a versão mais nova na rede; sem internet, usa a cópia salva */
-const V = 'racelab-v76';
+const V = 'racelab-v77';
 const SHELL = ['./', 'index.html', 'favicon.svg', 'manifest.webmanifest', 'css/app.css', 'js/core.js', 'js/charts.js', 'js/data.js', 'js/pages1.js', 'js/pages2.js', 'js/telemetry.js', 'js/strategy.js', 'js/circuits.js', 'js/live.js', 'js/sponsor.js', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== V).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
