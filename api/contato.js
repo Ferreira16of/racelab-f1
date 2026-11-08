@@ -1,7 +1,7 @@
 /* RaceLab — envio automático do formulário de patrocínio por e-mail (Resend).
    Variáveis de ambiente (Vercel > Settings > Environment Variables):
      RESEND_API_KEY   chave de API do Resend (nunca no código)
-     CONTACT_TO       e-mail que recebe as mensagens (no plano grátis sem domínio próprio, use o e-mail da conta do Resend)
+     CONTACT_TO       (opcional) e-mail que recebe as mensagens; padrão: o e-mail de contato do site. No plano grátis sem domínio próprio, precisa ser o e-mail da conta do Resend
      CONTACT_FROM     (opcional) remetente, ex.: "RaceLab <contato@seudominio.com>" — padrão: onboarding@resend.dev */
 const hits = new Map(); // limite simples por IP (melhor esforço; a instância pode reiniciar)
 const WINDOW = 60 * 60e3, MAX_HITS = 5;
@@ -19,8 +19,8 @@ module.exports = async (req, res) => {
   const send = (code, obj) => { res.statusCode = code; res.end(JSON.stringify(obj)); };
   if (req.method !== 'POST') return send(405, { error: 'metodo' });
 
-  const key = process.env.RESEND_API_KEY, to = process.env.CONTACT_TO;
-  if (!key || !to) return send(503, { error: 'indisponivel' });
+  const key = process.env.RESEND_API_KEY, to = process.env.CONTACT_TO || 'thony.ferreira.az@gmail.com';
+  if (!key) return send(503, { error: 'indisponivel', faltando: 'RESEND_API_KEY' });
 
   const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || req.socket?.remoteAddress || 'x').trim(), now = Date.now();
   const arr = (hits.get(ip) || []).filter((t) => now - t < WINDOW);
