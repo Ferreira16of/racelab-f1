@@ -742,3 +742,16 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .spn-box .sp-checks{margin:0}
 .sp-preview{min-height:0}
 .sp-pv-card.main{width:min(100%,360px)}
+
+/* Patrocínio: cartão de prévia */
+.sp-preview{display:flex;justify-content:center;align-items:center;min-height:0}
+.spn-pv{width:min(100%,370px);padding:22px 24px;border:1px solid rgba(245,197,24,.55);border-radius:20px;background:linear-gradient(160deg,rgba(245,197,24,.12),var(--card) 60%);box-shadow:0 20px 50px rgba(0,0,0,.45),0 0 0 1px rgba(245,197,24,.12)}
+.spn-pv-top{display:flex;align-items:center;gap:14px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.spn-pv-ic{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#f5c518;color:#1a1400}
+.spn-pv-ic svg{width:24px;height:24px}
+.spn-pv-id{display:grid;gap:7px;min-width:0;justify-items:start}
+.spn-pv-id b{font:700 19px/1.15 var(--disp,inherit)}
+.spn-pv-badge{padding:3px 11px;border-radius:99px;background:#f5c518;color:#1a1400;font:700 11.5px/1.4 Inter,sans-serif}
+.spn-pv-list{list-style:none;margin:0;padding:0;display:grid;gap:12px;font-size:14px;color:var(--tx-2)}
+.spn-pv-list li{display:flex;align-items:flex-start;gap:10px;line-height:1.4}
+.spn-pv-list li::before{content:"✓";flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(61,220,132,.14);color:#3ddc84;font:700 12px/1 Inter,sans-serif}

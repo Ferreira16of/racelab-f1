@@ -28,7 +28,7 @@
         <div class="sp-cta"><a class="btn pri lg" href="#" data-go="sp-form">Falar sobre patrocínio</a>${mail ? `<a class="btn lg" href="mailto:${esc(mail)}?subject=${enc('Mídia kit RaceLab')}&body=${enc(kitBody)}">Pedir mídia kit</a>` : ''}</div>
         <ul class="sp-uses"><li>Público fiel de Fórmula 1</li><li>Sem anúncios de rede</li><li>Formatos sob medida</li></ul>
       </div>
-      <div class="sp-preview" aria-hidden="true"><div class="sp-pv-card main"><div class="sp-pv-top"><span class="sp-av lg">${GW.ic('star')}</span><div><b>Sua marca aqui</b><span class="sp-badge b-chefe">Parceiro oficial</span></div></div><ul><li>Logo e link na Home e no rodapé</li><li>Página própria de parceiro</li><li>Menção em cada Grande Prêmio</li></ul></div></div>
+      <div class="sp-preview" aria-hidden="true"><div class="spn-pv"><div class="spn-pv-top"><span class="spn-pv-ic">${GW.ic('star')}</span><div class="spn-pv-id"><b>Sua marca aqui</b><span class="spn-pv-badge">Parceiro oficial</span></div></div><ul class="spn-pv-list"><li>Logo e link na Home e no rodapé</li><li>Página própria de parceiro</li><li>Menção em cada Grande Prêmio</li></ul></div></div>
     </section>
 
     <div class="sp-two spn-two mt">
