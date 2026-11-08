@@ -30,12 +30,12 @@
   }
   const deltaStr = (d, dec = 3) => (isNum(d) ? (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d).toFixed(dec) : '—');
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const tzNice = () => { try { const n = new Intl.DateTimeFormat('pt-BR', { timeZoneName: 'longGeneric' }).formatToParts(new Date()).find((p) => p.type === 'timeZoneName'); if (n && n.value) return n.value; } catch { /* usa o padrão */ } return tz.split('/').pop().replace(/_/g, ' '); };
-  const tzShort = () => { try { return new Date().toLocaleTimeString('pt-BR', { timeZoneName: 'short' }).split(' ').pop(); } catch { return tz; } };
+  const tzNice = () => { try { const n = new Intl.DateTimeFormat(I18N.loc(), { timeZoneName: 'longGeneric' }).formatToParts(new Date()).find((p) => p.type === 'timeZoneName'); if (n && n.value) return n.value; } catch { /* usa o padrão */ } return tz.split('/').pop().replace(/_/g, ' '); };
+  const tzShort = () => { try { return new Date().toLocaleTimeString(I18N.loc(), { timeZoneName: 'short' }).split(' ').pop(); } catch { return tz; } };
   function toDate(date, time) { return new Date(`${date}T${time || '12:00:00Z'}`); }
-  const fmtDay = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
-  const fmtDT = (d) => d.toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '');
-  const fmtFull = (d) => d.toLocaleString('pt-BR', { dateStyle: 'medium', timeStyle: 'short' });
+  const fmtDay = (d) => d.toLocaleDateString(I18N.loc(), { day: '2-digit', month: 'short' }).replace('.', '');
+  const fmtDT = (d) => d.toLocaleString(I18N.loc(), { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '');
+  const fmtFull = (d) => d.toLocaleString(I18N.loc(), { dateStyle: 'medium', timeStyle: 'short' });
   const ago = (ts) => { const s = (Date.now() - ts) / 1000; return s < 60 ? 'agora há pouco' : s < 3600 ? `há ${Math.floor(s / 60)} min` : s < 86400 ? `há ${Math.floor(s / 3600)} h` : `há ${Math.floor(s / 86400)} d`; };
   const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
   const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -232,6 +232,7 @@
     $('#burger').addEventListener('click', () => { const o = $('#navlinks').classList.toggle('open'); $('#burger').setAttribute('aria-expanded', o); });
     $('#tzlabel').textContent = `${tzNice()} (${tzShort()})`;
     renderCtx();
+    window.addEventListener('rl-lang', () => { $('#tzlabel').textContent = `${tzNice()} (${tzShort()})`; });
     if (!location.hash) location.hash = '#/home';
     route();
     // sessão ao vivo: marca o menu e abre a tela Ao vivo uma vez por visita

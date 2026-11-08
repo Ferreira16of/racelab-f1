@@ -5,7 +5,7 @@
   const { J } = GW;
   const two = (n) => String(n).padStart(2, '0');
   const dur = (ms) => { const t = Math.max(0, Math.round(ms / 1000)), d = Math.floor(t / 86400), h = Math.floor((t % 86400) / 3600), m = Math.floor((t % 3600) / 60), s = t % 60; return d ? `${d}d ${h}h ${two(m)}min` : h ? `${h}:${two(m)}:${two(s)}` : `${m}:${two(s)}`; };
-  const hm = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const hm = (d) => d.toLocaleTimeString(I18N.loc(), { hour: '2-digit', minute: '2-digit' });
 
   GW.pages.live = async (p, el, tk) => {
     await J.init();
@@ -91,7 +91,7 @@
         if (!sel) { st.textContent = 'sem sessões'; body.innerHTML = '<div class="lb-load">Ainda não há cronometragem publicada. Ela aparece aqui assim que uma sessão começar.</div>'; busy = false; return; }
         const j = await api('id=' + sel), S = j.session || {}, age = Date.now() - (j.generated_at_ms || 0), stale = !j.final && (j.critical_data_stale || age > 120000);
         const rows = (j.rows || []).filter((r) => r.position).sort((a, b) => a.position - b.position), ok = (v) => (v == null || v === '' || v === '-' ? '<i class="mu">—</i>' : esc(v));
-        st.textContent = `atualizado ${new Date(j.generated_at_ms || Date.now()).toLocaleTimeString('pt-BR')}`;
+        st.textContent = `atualizado ${new Date(j.generated_at_ms || Date.now()).toLocaleTimeString(I18N.loc())}`;
         const flag = (S.status && S.status.key) || '';
         const T = $('#lbTitle', box); if (T) T.innerHTML = j.final ? 'Última sessão' : stale ? 'Cronometragem' : '<i class="livedot"></i> Cronometragem ao vivo';
         body.innerHTML = `<div class="lb-head"><div><div class="lb-ev">${esc(S.event_name || '')}</div><div class="lb-ses">${esc(S.name || '')}${S.qualifying_phase_label ? ' · ' + esc(S.qualifying_phase_label) : ''}</div></div><div class="lb-chips">${S.status ? `<span class="lb-flag ${esc(flag)}">${esc(S.status.label || '')}</span>` : ''}${S.progress ? `<span class="chip">${esc(S.progress)}</span>` : ''}${S.total_laps ? `<span class="chip">Volta ${esc(S.current_lap)}/${esc(S.total_laps)}</span>` : ''}${j.final ? '<span class="chip">Encerrada</span>' : ''}${stale ? '<span class="chip warn">Dados atrasados</span>' : ''}</div></div>
