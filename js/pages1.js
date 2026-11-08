@@ -231,11 +231,31 @@
     $$('#rtabs button', el).forEach((b) => (b.onclick = () => setTab(b.dataset.t))); setTab(tab);
   };
   const jkind = (s) => ({ race: 'results', qualifying: 'qualifying', sprint: 'sprint' }[s]);
+  /** completa grid e melhor volta quando a fonte oficial ainda não trouxe esses campos */
+  async function fillGaps(rows, y, r, ses, race) {
+    const norm = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    try {
+      if (rows.some((x) => x.grid == null) && ses === 'race') {
+        const q = await J.session(y, r, 'qualifying'), pos = new Map(q.rows.map((x) => [x.Driver.driverId, x.position]));
+        rows.forEach((x) => { if (x.grid == null && pos.has(x.Driver.driverId)) x.grid = String(pos.get(x.Driver.driverId)); });
+      }
+    } catch { /* sem classificação */ }
+    try {
+      if (rows.every((x) => !x.FastestLap)) {
+        const f = await GW.liveFind(race, KEY_OF[ses]); if (!f) return;
+        const lt = (f.j.rows || []).filter((t) => t.best_lap_seconds > 0);
+        const by = rows.map((x) => { const fam = norm(x.Driver.familyName), t = lt.find((u) => norm(u.driver_full_name || u.driver).includes(fam)); return t ? { x, t } : null; }).filter(Boolean).sort((a, b) => a.t.best_lap_seconds - b.t.best_lap_seconds);
+        by.forEach(({ x, t }, i) => { x.FastestLap = { rank: String(i + 1), lap: String(t.best_lap_number || ''), Time: { time: t.best_lap } }; });
+      }
+    } catch { /* sem tempos */ }
+  }
   async function tabRes(body, y, r, ses, race, tk) {
     if (!jkind(ses)) { body.innerHTML = `<div class="banner info">Treinos livres não têm classificação final. Veja a aba <b>Melhores voltas e setores</b> </div>`; return; }
     const { rows, race: rc } = await J.session(y, r, jkind(ses)); if (!GW.alive(tk)) return;
     if (!rows.length && GW.raceStatus(race) !== 'future' && await liveFall(body, race, ses, tk)) return;
     if (!rows.length) { body.innerHTML = GW.empty('Sem resultados', GW.raceStatus(race) === 'future' ? 'Esta sessão ainda não aconteceu.' : 'O resultado ainda não foi publicado.'); return; }
+    if (ses !== 'qualifying' && (rows.some((x) => x.grid == null) || rows.every((x) => !x.FastestLap))) await fillGaps(rows, y, r, ses, race);
+    if (!GW.alive(tk)) return;
     const isQ = ses === 'qualifying'; const leadLaps = Math.max(...rows.map((x) => +x.laps || 0));
     const cols = isQ ? [
       { k: 'p', label: 'Pos', render: (x) => posTxt(x), sort: (x) => +x.position, cls: 'pos' }, { k: 'n', label: '#', render: (x) => esc(x.number) },

@@ -716,3 +716,20 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .sp-direct span{color:var(--tx-2)}.sp-direct a:not(.btn){color:inherit;text-decoration:underline;word-break:break-all}
 .sp-steps b{flex:none}
 @media(max-width:640px){.sp-two2{grid-template-columns:minmax(0,1fr)}}
+
+/* Patrocínio: layout próprio (independente do antigo assistente de apoio) */
+#sp-form{scroll-margin-top:80px}
+.spn-card{display:block;padding:24px;overflow:visible}
+.spn-card h2{margin:0 0 6px}
+.spn-card .sp-sub{margin:0 0 18px;color:var(--tx-2)}
+.spn-form{display:grid;gap:14px;max-width:760px}
+.spn-form .sp-f{display:grid;gap:6px;min-width:0}
+.spn-form .sp-f input,.spn-form .sp-f select,.spn-form .sp-f textarea{width:100%;min-width:0;box-sizing:border-box}
+.spn-form .sp-f textarea{height:auto;padding:12px 14px;border:1.5px solid #2a3350;border-radius:12px;background:#0b0f1a}
+.spn-form .sp-f select{height:50px;padding:0 14px;border:1.5px solid #2a3350;border-radius:12px;background-color:#0b0f1a}
+.spn-form .sp-send{margin-top:4px}.spn-form .sp-send .btn{flex:0 1 260px}
+.spn-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0 0;padding:0}
+.spn-steps li{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);min-width:0}
+.spn-steps b{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--red-dim,rgba(225,6,0,.15));color:#ff5a50;font:700 14px var(--mono,monospace)}
+.spn-steps span{min-width:0}
+@media(max-width:700px){.spn-card{padding:18px 14px}.spn-steps{grid-template-columns:minmax(0,1fr)}.spn-form .sp-send .btn{flex:1 1 100%}}

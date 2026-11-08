@@ -39,10 +39,10 @@
     </div>
 
     <section class="card mt"><h2>Como funciona</h2>
-      <ol class="sp-steps"><li><b>1</b><span>Você conta o objetivo e o orçamento</span></li><li><b>2</b><span>Eu envio uma proposta sob medida</span></li><li><b>3</b><span>Fechado o acordo, sua marca entra no ar</span></li></ol></section>
+      <ol class="spn-steps"><li><b>1</b><span>Você conta o objetivo e o orçamento</span></li><li><b>2</b><span>Eu envio uma proposta sob medida</span></li><li><b>3</b><span>Fechado o acordo, sua marca entra no ar</span></li></ol></section>
 
-    <section id="sp-form" class="card mt sp-wiz"><h2>Fale com a gente</h2><p class="sp-sub">Conte o que você procura e enviaremos a sua mensagem na hora. A resposta chega no e-mail que você informar.</p>
-      <form id="spf" class="sp-form" novalidate>
+    <section id="sp-form" class="card mt spn-card"><h2>Fale com a gente</h2><p class="sp-sub">Conte o que você procura e enviaremos a sua mensagem na hora. A resposta chega no e-mail que você informar.</p>
+      <form id="spf" class="spn-form" novalidate>
         <div class="sp-two2">
           <label class="sp-f"><span>Seu nome</span><input id="fn" maxlength="60" autocomplete="name" placeholder="Como podemos te chamar"></label>
           <label class="sp-f"><span>Marca ou empresa</span><input id="fb" maxlength="80" autocomplete="organization" placeholder="Nome da marca"></label>
