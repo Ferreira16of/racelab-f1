@@ -1,4 +1,4 @@
-/* RaceLab — Circuit Explorer */
+/* RaceLab — Circuitos */
 (function () {
   'use strict';
   const U = GW.util, { esc, $, $$, isNum, parseLap, lapTime } = U;
@@ -24,7 +24,7 @@
     await J.init();
     if (p[0]) return detail(p[0], +p[1] || null, el, tk);
     const years = await J.seasons(); const y = GW.store.get('circYear', 0);
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Circuit Explorer</span><h1>Circuitos</h1><p class="sub">Traçados reais com curvas numeradas, histórico de vencedores e melhores voltas dos circuitos usados nas últimas temporadas.</p></div>
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Pistas</span><h1>Circuitos</h1><p class="sub">Traçados reais com curvas numeradas, histórico de vencedores e melhores voltas dos circuitos usados nas últimas temporadas.</p></div>
       <div class="row">${GW.ctl('cy', 'Temporada', '<option value="0">Todos os atuais</option>' + GW.options(years.map((v) => [v, v]), y))}<div class="ctl"><label for="cq">Buscar</label><input id="cq" type="search" placeholder="Circuito, cidade ou país"></div><div class="ctl"><label for="cf">Mostrar</label><select id="cf"><option value="all">Todos</option><option value="fav">Favoritos</option></select></div></div></div><div class="list-grid" id="cl">${GW.loading()}</div>`;
     let list = [], idx = null;
     const load = async () => { const yy = +$('#cy', el).value; GW.store.set('circYear', yy); $('#cl', el).innerHTML = GW.loading(); try { list = await J.circuits(yy || null); idx = await J.circuitIndex().catch(() => null); const geo = await geoMap(); list = list.filter((c) => geo.has(c.circuitId) && (!idx || idx.has(c.circuitId))); } catch (e) { $('#cl', el).innerHTML = GW.error(e); return; } if (GW.alive(tk)) draw(); };

@@ -104,7 +104,7 @@
     <h2 class="mt" style="margin-bottom:12px">Análises</h2>
     <div class="quick">
       <a href="#/telemetry"><span>${GW.ic('pulse')}</span><b>Telemetry Lab</b><span>Compare voltas: velocidade, freio, acelerador e delta.</span></a>
-      <a href="#/circuits"><span>${GW.ic('map')}</span><b>Circuit Explorer</b><span>Traçados reais, curvas e histórico por pista.</span></a>
+      <a href="#/circuits"><span>${GW.ic('map')}</span><b>Circuitos</b><span>Traçados reais, curvas e histórico por pista.</span></a>
       <a href="#/strategy"><span>${GW.ic('timer')}</span><b>Strategy Lab</b><span>Simule paradas, pneus e Safety Car.</span></a>
       <a href="#/wars"><span>${GW.ic('swords')}</span><b>Driver Wars</b><span>Compare pilotos por indicadores.</span></a>
     </div>

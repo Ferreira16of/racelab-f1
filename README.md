@@ -1,6 +1,6 @@
 # RaceLab
 
-Plataforma de análise de Fórmula 1: resultados, campeonatos, perfis de pilotos e equipes, Telemetry Lab, Strategy Lab, Circuit Explorer e Driver Wars. Site estático (HTML/CSS/JS puros) e PWA instalável.
+Plataforma de análise de Fórmula 1: resultados, campeonatos, perfis de pilotos e equipes, Telemetry Lab, Strategy Lab, Circuitos e Driver Wars. Site estático (HTML/CSS/JS puros) e PWA instalável.
 
 ## Rodar localmente
 ```bash
