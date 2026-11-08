@@ -100,7 +100,7 @@
       <div class="card"><div class="card-h"><h2>Construtores</h2><a class="btn sm" href="#/championships/${y}/constructors">Classificação completa</a></div>
         ${cs?.rows.length ? cs.rows.map((r) => `<div class="bar-row bar-team"><span><span class="na" style="color:inherit">${r.position}</span> ${GW.teamLogo(r.Constructor.constructorId, 16, y)}<a href="#/teams/${r.Constructor.constructorId}/${y}">${esc(r.Constructor.name)}</a></span><div class="tr"><i style="width:${(+r.points / maxC) * 100}%;background:${tc(r.Constructor.constructorId, r.Constructor.name)}"></i></div><span class="v">${GW.pts(r.points)}</span></div>`).join('') : GW.empty('Classificação indisponível')}</div>
     </div>
-    <div class="card mt"><div class="card-h"><h2>Destaques da temporada</h2></div><div class="grid g4" id="hl">${GW.loading('Calculando destaques…')}</div></div>
+    <div class="card mt"><div class="card-h"><h2>Destaques da temporada</h2></div><div id="hl">${GW.loading('Calculando destaques…')}</div></div>
     <h2 class="mt" style="margin-bottom:12px">Análises</h2>
     <div class="quick">
       <a href="#/telemetry"><span>${GW.ic('pulse')}</span><b>Telemetry Lab</b><span>Compare voltas: velocidade, freio, acelerador e delta.</span></a>
@@ -125,13 +125,18 @@
       if (!GW.alive(tk)) return; const h = $('#hl', el); if (!h) return;
       const arr = [...sd.drivers.values()], by = (k) => arr.slice().sort((a, b) => b[k] - a[k]);
       const w = by('wins')[0], po = by('podiums')[0], pl = by('poles')[0], fl = by('fl')[0], dn = by('dnf')[0];
-      const card = (k, e, v, d) => `<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
-      h.innerHTML = [
-        leader && second ? card('Vantagem do líder', 0, `${GW.pts(+leader.points - +second.points)} pts`, `${esc(leader.Driver.familyName)} sobre ${esc(second.Driver.familyName)}`) : '',
-        w ? card('Mais vitórias', 0, w.wins, esc(GW.fullName(w.driver))) : '', pl ? card('Mais poles', 0, pl.poles, esc(GW.fullName(pl.driver))) : '',
-        po ? card('Mais pódios', 0, po.podiums, esc(GW.fullName(po.driver))) : '', fl ? card('Mais voltas rápidas', 0, fl.fl, esc(GW.fullName(fl.driver))) : '',
-        card('Vencedores diferentes', 0, arr.filter((a) => a.wins > 0).length, `em ${sd.done.length} corridas`), dn ? card('Mais abandonos', 0, dn.dnf, esc(GW.fullName(dn.driver))) : '',
-        card('Pontos ainda em jogo', 0, `${sched.length - sd.done.length} GPs`, 'restantes no calendário')].join('');
+      const third = ds?.rows[2], tile = (k, v, d) => `<div class="hl-t"><span class="k">${k}</span><b>${v}</b><span class="d">${d}</span></div>`;
+      const gap2 = leader && second && third ? +second.points - +third.points : null;
+      const camp = [
+        leader && second ? tile('Vantagem do líder', `${GW.pts(+leader.points - +second.points)} pts`, `${esc(leader.Driver.familyName)} sobre ${esc(second.Driver.familyName)}`) : '',
+        gap2 != null ? tile('Disputa pela 2ª colocação', gap2 === 0 ? 'Empate' : `${GW.pts(gap2)} pts`, `${esc(second.Driver.familyName)} × ${esc(third.Driver.familyName)}`) : '',
+        tile('Vencedores diferentes', arr.filter((a) => a.wins > 0).length, `em ${sd.done.length} ${sd.done.length === 1 ? 'corrida' : 'corridas'}`)].join('');
+      const pil = [
+        w ? tile('Mais vitórias', w.wins, esc(GW.fullName(w.driver))) : '', pl ? tile('Mais poles', pl.poles, esc(GW.fullName(pl.driver))) : '',
+        po ? tile('Mais pódios', po.podiums, esc(GW.fullName(po.driver))) : '', fl ? tile('Mais voltas rápidas', fl.fl, esc(GW.fullName(fl.driver))) : '',
+        dn ? tile('Mais abandonos', dn.dnf, esc(GW.fullName(dn.driver))) : ''].join('');
+      h.className = 'hl';
+      h.innerHTML = `<div class="hl-grp"><h3>Campeonato</h3><div class="hl-row">${camp}</div></div><div class="hl-grp"><h3>Pilotos em destaque</h3><div class="hl-row">${pil}</div></div>`;
     }).catch((e) => { const h = $('#hl', el); if (h) h.innerHTML = GW.error(e); });
     return stop;
   };
