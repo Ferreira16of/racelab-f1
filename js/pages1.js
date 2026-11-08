@@ -171,15 +171,20 @@
       return hit ? { item: hit, j: await F1M('id=' + hit.id) } : null;
     } catch { return null; }
   };
-  GW.liveTable = (j) => {
+  GW.liveDriverLinks = async (year) => {
+    const ds = await J.drivers(year).catch(() => []), n = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const list = ds.map((d) => ({ id: d.driverId, fam: n(d.familyName), giv: n(d.givenName) })).sort((a, b) => b.fam.length - a.fam.length);
+    return (r) => { const full = n(r.driver_full_name || r.driver), h = list.filter((d) => full.includes(d.fam)); return ((h.find((d) => full.includes(d.giv)) || h[0] || {}).id) || null; };
+  };
+  GW.liveTable = (j, L) => {
     const rows = (j.rows || []).filter((r) => r.position).sort((a, b) => a.position - b.position), ok = (v) => (v == null || v === '' || v === '-' ? '<i class="mu">—</i>' : esc(v));
     const cls = (v) => { v = String(v || '').toLowerCase(); return /purple|overall|roxo/.test(v) ? ' pu' : /green|verde|personal|pb/.test(v) ? ' gr' : ''; };
     if (!rows.length) return '';
-    return `<div class="tbl-wrap"><table class="lbt"><thead><tr><th>Pos</th><th>Piloto</th><th class="r">Gap</th><th class="r">Int.</th><th class="r">Última</th><th class="r">Melhor</th><th class="r s">S1</th><th class="r s">S2</th><th class="r s">S3</th><th>Pneu</th><th class="r">Box</th></tr></thead><tbody>${rows.map((r) => `<tr><td><span class="pos${r.position <= 3 ? ' p' + r.position : ''}">${esc(r.position)}</span></td><td><div class="drv" style="--tc:${esc(r.team_colour || '#888')}"><i></i><div><b>${esc(r.driver_full_name || r.driver || '')}</b><small>${esc(r.team || '')} · #${esc(r.number || '')}</small></div></div></td><td class="r">${ok(r.gap)}</td><td class="r">${ok(r.interval)}</td><td class="r${cls(r.last_lap_status)}">${/BOX/i.test(r.last_lap || '') ? '<span class="chip">Box</span>' : ok(r.last_lap)}</td><td class="r${cls(r.best_lap_status)}">${ok(r.best_lap)}</td><td class="r s${cls(r.sector_1_status)}">${ok(r.sector_1)}</td><td class="r s${cls(r.sector_2_status)}">${ok(r.sector_2)}</td><td class="r s${cls(r.sector_3_status)}">${ok(r.sector_3)}</td><td>${r.compound ? `<span class="tyre">${esc(r.compound)}</span>` : ok(r.tyres)}</td><td class="r">${esc(r.pits ?? 0)}</td></tr>`).join('')}</tbody></table></div>`;
+    return `<div class="tbl-wrap"><table class="lbt"><thead><tr><th>Pos</th><th>Piloto</th><th class="r">Gap</th><th class="r i">Int.</th><th class="r l">Última</th><th class="r">Melhor</th><th class="r s">S1</th><th class="r s">S2</th><th class="r s">S3</th><th>Pneu</th><th class="r bx">Box</th></tr></thead><tbody>${rows.map((r) => `<tr><td><span class="pos${r.position <= 3 ? ' p' + r.position : ''}">${esc(r.position)}</span></td><td><div class="drv" style="--tc:${esc(r.team_colour || '#888')}"><i></i><div><b>${(() => { const id = L && L.fn(r), t = esc(r.driver_full_name || r.driver || ''); return id ? `<a href="#/drivers/${L.year}/${id}">${t}</a>` : t; })()}</b><small>${esc(r.team || '')} · #${esc(r.number || '')}</small></div></div></td><td class="r">${ok(r.gap)}</td><td class="r i">${ok(r.interval)}</td><td class="r l${cls(r.last_lap_status)}">${/BOX/i.test(r.last_lap || '') ? '<span class="chip">Box</span>' : ok(r.last_lap)}</td><td class="r${cls(r.best_lap_status)}">${ok(r.best_lap)}</td><td class="r s${cls(r.sector_1_status)}">${ok(r.sector_1)}</td><td class="r s${cls(r.sector_2_status)}">${ok(r.sector_2)}</td><td class="r s${cls(r.sector_3_status)}">${ok(r.sector_3)}</td><td>${r.compound ? `<span class="tyre">${esc(r.compound)}</span>` : ok(r.tyres)}</td><td class="r bx">${esc(r.pits ?? 0)}</td></tr>`).join('')}</tbody></table></div>`;
   };
   async function liveFall(body, race, ses, tk) {
     const f = await GW.liveFind(race, KEY_OF[ses]); if (!f || !GW.alive(tk)) return false;
-    const t = GW.liveTable(f.j); if (!t) return false;
+    const t = GW.liveTable(f.j, { year: +race.season, fn: await GW.liveDriverLinks(+race.season) }); if (!t) return false;
     body.innerHTML = `<div class="banner info" style="margin-bottom:10px">${f.j.final ? 'Estes são os tempos finais da sessão.' : 'Sessão em andamento: tempos atualizados em tempo real.'} Os dados oficiais completos aparecem aqui sozinhos assim que forem publicados.</div><div class="card"><div class="card-h"><h2>${esc((f.j.session || {}).name || 'Sessão')} — tempos</h2></div>${t}</div>`;
     const el = body.parentElement; clearTimeout(el._rt); el._rt = setTimeout(() => { const b = $('#rtabs button.on', el); if (b && GW.alive(tk)) b.click(); }, 45000);
     return true;

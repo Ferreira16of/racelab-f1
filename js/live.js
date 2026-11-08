@@ -68,12 +68,19 @@
 
   /* ---------- PAINEL AO VIVO (cronometragem em tempo real, grátis) ---------- */
   async function liveBoard(box, tk) {
+    const links = { year: GW.currentYear, fn: await GW.liveDriverLinks(GW.currentYear) };
     let sel = null, auto = true, list = [], timer = 0, busy = false, stopped = false, lastScan = 0;
     box.innerHTML = `<div class="card lb"><div class="card-h"><h2 id="lbTitle">Cronometragem</h2><span class="meta" id="lbSt">conectando…</span></div><div id="lbPick" class="lb-pick"></div><div id="lbBody" class="mt-s"><div class="lb-load"><i class="livedot"></i> Carregando a sessão…</div></div></div>`;
     const api = (q) => fetch('/api/f1m?' + q, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
     const short = (x) => String(x.event || '').replace(/ ?\d{4}$/, '').replace(/^GP (d[aeo]s? )?/i, '');
     const best = () => { const act = list.filter((x) => !x.final && x.n && !x.stale).pop(); return (act || list.filter((x) => x.n).pop() || list.at(-1) || {}).id || null; };
-    const pick = () => { $('#lbPick', box).innerHTML = list.filter((x) => x.n || x.id === sel).slice(-8).reverse().map((x) => `<button class="lb-tab ${x.id === sel ? 'on' : ''}" data-id="${x.id}">${!x.final && x.n && !x.stale ? '<i class="livedot"></i>' : ''}<b>${esc(x.name)}</b><span>${esc(short(x))}</span></button>`).join(''); $$('#lbPick button', box).forEach((b) => (b.onclick = () => { sel = +b.dataset.id; auto = false; pick(); tick(); })); };
+    const pick = () => {
+      const cur = list.find((x) => x.id === sel) || {}, tabs = list.filter((x) => x.event === cur.event && (x.n || x.id === sel)).sort((a, b) => a.id - b.id), P = $('#lbPick', box);
+      P.hidden = tabs.length < 2;
+      P.innerHTML = tabs.map((x) => `<button class="lb-tab ${x.id === sel ? 'on' : ''}" data-id="${x.id}">${!x.final && x.n && !x.stale ? '<i class="livedot"></i>' : ''}<b>${esc(x.name)}</b><span>${!x.final && x.n && !x.stale ? 'Ao vivo' : 'Encerrada'}</span></button>`).join('');
+      $$('#lbPick button', box).forEach((b) => (b.onclick = () => { sel = +b.dataset.id; auto = false; pick(); tick(); }));
+      const on = $('#lbPick .on', box); if (on) P.scrollLeft = on.offsetLeft - (P.clientWidth - on.offsetWidth) / 2;
+    };
     const scan = async () => { const from = GW.store.get('f1mFrom', 100); list = await api('scan=1&from=' + from); lastScan = Date.now(); if (list.length) { GW.store.set('f1mFrom', Math.max(100, list[0].id - 3)); if (auto || !list.some((x) => x.id === sel)) sel = best(); pick(); } };
     const cls = (v) => { v = String(v || '').toLowerCase(); return /purple|overall|roxo/.test(v) ? ' pu' : /green|verde|personal|pb/.test(v) ? ' gr' : ''; };
     const tick = async () => {
@@ -89,7 +96,7 @@
         const T = $('#lbTitle', box); if (T) T.innerHTML = j.final ? 'Última sessão' : stale ? 'Cronometragem' : '<i class="livedot"></i> Cronometragem ao vivo';
         body.innerHTML = `<div class="lb-head"><div><div class="lb-ev">${esc(S.event_name || '')}</div><div class="lb-ses">${esc(S.name || '')}${S.qualifying_phase_label ? ' · ' + esc(S.qualifying_phase_label) : ''}</div></div><div class="lb-chips">${S.status ? `<span class="lb-flag ${esc(flag)}">${esc(S.status.label || '')}</span>` : ''}${S.progress ? `<span class="chip">${esc(S.progress)}</span>` : ''}${S.total_laps ? `<span class="chip">Volta ${esc(S.current_lap)}/${esc(S.total_laps)}</span>` : ''}${j.final ? '<span class="chip">Encerrada</span>' : ''}${stale ? '<span class="chip warn">Dados atrasados</span>' : ''}</div></div>
           ${!j.final && (j.api_degraded || !rows.some((r) => r.best_lap_seconds || (r.last_lap && !/BOX/i.test(r.last_lap) && r.last_lap !== '-'))) ? `<div class="banner info" style="margin-bottom:10px">${j.api_degraded ? 'A transmissão de tempos está instável agora' : 'Ainda não há voltas cronometradas'} — os tempos aparecem aqui assim que chegarem. ${esc(j.notice || '')}</div>` : ''}
-          ${rows.length ? GW.liveTable(j) : `<div class="lb-load">${j.final ? 'Sessão sem tempos registrados.' : 'Aguardando os primeiros tempos desta sessão…'}</div>`}
+          ${rows.length ? GW.liveTable(j, links) : `<div class="lb-load">${j.final ? 'Sessão sem tempos registrados.' : 'Aguardando os primeiros tempos desta sessão…'}</div>`}
           ${(j.updates || []).length ? `<div class="lb-feed">${j.updates.slice(0, 6).map((u) => `<div><span>${esc(String(u.time || '').slice(11, 16))}</span>${esc(u.text)}</div>`).join('')}</div>` : ''}`;
       } catch (e) { st.textContent = 'sem conexão'; if (!$('.lbt', body)) body.innerHTML = '<div class="lb-load">Reconectando à cronometragem…</div>'; lastScan = 0; }
       busy = false;
