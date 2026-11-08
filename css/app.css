@@ -665,3 +665,16 @@ footer .sup-link{color:inherit;text-decoration:underline}
   .gr-pole b{font-size:18px}
 }
 @media(max-width:380px){.lbt .tyre{display:none}.lbt .drv b{max-width:38vw}}
+
+/* Responsividade: filtros compactos e alvos de toque no celular */
+@media(max-width:600px){
+  .page-head .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}
+  .page-head .row .ctl{flex:none;min-width:0}
+  .page-head .row .ctl:last-child:nth-child(odd){grid-column:1/-1}
+  .page-head .row .ctl:has(#rr){grid-column:1/-1;order:-1}
+  .page-head .row .ctl:has(#rs){grid-column:auto}
+  select{min-height:44px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:none;white-space:nowrap}
+}
+@media(max-width:380px){.sess{flex-wrap:wrap;gap:4px 10px}.sess .t{flex-basis:100%;order:3}}
