@@ -41,7 +41,7 @@
     <section class="card mt"><h2>Como funciona</h2>
       <ol class="sp-steps"><li><b>1</b><span>Você conta o objetivo e o orçamento</span></li><li><b>2</b><span>Eu envio uma proposta sob medida</span></li><li><b>3</b><span>Fechado o acordo, sua marca entra no ar</span></li></ol></section>
 
-    <section id="sp-form" class="card mt sp-wiz"><h2>Fale com a gente</h2><p class="sp-sub">Preencha os campos e o e-mail abre já pronto para enviar${mail ? ` para <b>${esc(mail)}</b>` : ''}.</p>
+    <section id="sp-form" class="card mt sp-wiz"><h2>Fale com a gente</h2><p class="sp-sub">Conte o que você procura e enviaremos a sua mensagem na hora. A resposta chega no e-mail que você informar.</p>
       <form id="spf" class="sp-form" novalidate>
         <div class="sp-two2">
           <label class="sp-f"><span>Seu nome</span><input id="fn" maxlength="60" autocomplete="name" placeholder="Como podemos te chamar"></label>
@@ -52,7 +52,8 @@
         <label class="sp-f"><span>Orçamento aproximado</span><select id="fo">${budgets.map((b) => `<option>${esc(b)}</option>`).join('')}</select></label>
         <label class="sp-f"><span>Mensagem</span><textarea id="fm" rows="4" maxlength="800" placeholder="Conte seu objetivo, o período e o que você imagina para a parceria"></textarea></label>
         <p class="sp-err" id="sperr" role="alert" hidden></p>
-        ${mail ? `<div class="sp-send"><button class="btn pri lg" id="fg" type="submit">Enviar pelo Gmail</button><button class="btn lg" id="fo2" type="button">Usar outro e-mail</button></div><small class="sp-hint">Nada é enviado por este site: abrimos o seu e-mail com a mensagem pronta, e você só confirma o envio.</small>` : '<p class="muted">Contato em breve.</p>'}
+        <input id="fhp" name="website2" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+        <div class="sp-send"><button class="btn pri lg" id="fg" type="submit">Enviar mensagem</button></div><small class="sp-hint" id="fhint">Sua mensagem vai direto para o nosso e-mail. Usamos seus dados apenas para responder ao contato.</small>
       </form>
       ${mail || tg ? `<div class="sp-direct"><span>Prefere falar direto?</span>${mail ? `<a href="mailto:${esc(mail)}">${esc(mail)}</a><button class="btn sm" id="fcp" type="button">Copiar e-mail</button>` : ''}${tg ? `<a class="btn sm" target="_blank" rel="noopener" href="https://t.me/${esc(String(tg).replace(/^@/, ''))}">Telegram</a>` : ''}</div>` : ''}
     </section>
@@ -61,14 +62,9 @@
 
     $$('[data-go]', el).forEach((a) => (a.onclick = (e) => { e.preventDefault(); const t = document.getElementById(a.dataset.go); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
 
-    const f = $('#spf', el); if (!f || !mail) return;
+    const f = $('#spf', el); if (!f) return;
     const err = $('#sperr', el), v = (id) => $('#' + id, el).value.trim();
     const fail = (t, id) => { err.textContent = t; err.hidden = !t; if (id) { const n = $('#' + id, el); n.classList.add('bad'); n.focus(); } };
-    const data = () => {
-      const subject = `Patrocínio RaceLab — ${v('fb')}`;
-      const body = `Olá! Tenho interesse em patrocinar o RaceLab.\n\nNome: ${v('fn')}\nMarca: ${v('fb')}\nE-mail: ${v('fe')}\n${v('fs') ? `Site: ${v('fs')}\n` : ''}Orçamento: ${v('fo')}\n\n${v('fm')}`;
-      return { subject, body };
-    };
     const ok = () => {
       $$('.bad', f).forEach((n) => n.classList.remove('bad')); fail('');
       if (!v('fn')) return fail('Informe seu nome.', 'fn'), false;
@@ -77,8 +73,22 @@
       if (v('fm').length < 10) return fail('Conte um pouco sobre o que você procura.', 'fm'), false;
       return true;
     };
-    f.onsubmit = (e) => { e.preventDefault(); if (!ok()) return; const d = data(); window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${enc(mail)}&su=${enc(d.subject)}&body=${enc(d.body)}`, '_blank', 'noopener'); };
-    $('#fo2', el).onclick = () => { if (!ok()) return; const d = data(); location.href = `mailto:${mail}?subject=${enc(d.subject)}&body=${enc(d.body)}`; };
+    // alternativa quando o envio automático não está disponível: abre o e-mail do próprio usuário
+    const manual = () => {
+      if (!mail) return '';
+      const subject = `Patrocínio RaceLab — ${v('fb')}`, body = `Olá! Tenho interesse em patrocinar o RaceLab.\n\nNome: ${v('fn')}\nMarca: ${v('fb')}\nE-mail: ${v('fe')}\n${v('fs') ? `Site: ${v('fs')}\n` : ''}Orçamento: ${v('fo')}\n\n${v('fm')}`;
+      return `<a class="btn" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&fs=1&to=${enc(mail)}&su=${enc(subject)}&body=${enc(body)}">Enviar pelo meu Gmail</a> <a class="btn" href="mailto:${esc(mail)}?subject=${enc(subject)}&body=${enc(body)}">Usar outro e-mail</a>`;
+    };
+    f.onsubmit = async (e) => {
+      e.preventDefault(); if (!ok()) return;
+      const btn = $('#fg', el); btn.disabled = true; btn.textContent = 'Enviando…';
+      let r; try { const x = await fetch('/api/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: v('fn'), brand: v('fb'), email: v('fe'), site: v('fs'), budget: v('fo'), message: v('fm'), hp: v('fhp') }) }); r = { ok: x.ok, j: await x.json().catch(() => ({})) }; } catch { r = { ok: false, j: {} }; }
+      if (r.ok) { f.outerHTML = `<div class="sp-thanks"><div class="sp-ok">✓</div><h2>Mensagem enviada!</h2><p>Recebemos o seu contato e vamos responder no e-mail <b>${esc(v('fe'))}</b>. Obrigado pelo interesse em patrocinar o RaceLab.</p></div>`; return; }
+      btn.disabled = false; btn.textContent = 'Enviar mensagem';
+      const unavailable = !r.j.error || r.j.error === 'indisponivel';
+      fail(unavailable ? 'O envio automático não está disponível agora. Use uma das opções abaixo para enviar pelo seu e-mail.' : r.j.error);
+      if (unavailable || r.j.error) { const m = manual(); if (m) { let box = $('#fmanual', el); if (!box) { box = document.createElement('div'); box.id = 'fmanual'; box.className = 'sp-send'; err.after(box); } box.innerHTML = m; } }
+    };
     const cp = $('#fcp', el); if (cp) cp.onclick = async () => { try { await navigator.clipboard.writeText(mail); cp.textContent = 'Copiado!'; } catch { cp.textContent = mail; } setTimeout(() => (cp.textContent = 'Copiar e-mail'), 2000); };
   };
 })();
