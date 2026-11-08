@@ -155,6 +155,35 @@
 
   /* ---------- RESULTADOS ---------- */
   const OF_NAMES = { fp1: ['Practice 1'], fp2: ['Practice 2'], fp3: ['Practice 3'], sq: ['Sprint Qualifying', 'Sprint Shootout'] };
+  /* ---- tempos da transmissão ao vivo como alternativa enquanto o resultado oficial não é publicado ---- */
+  const KEY_OF = { race: 'RACE', qualifying: 'Q', sprint: 'SPRINT', sq: 'SQ', fp1: 'FP1', fp2: 'FP2', fp3: 'FP3' };
+  const F1M = (q) => fetch('/api/f1m?' + q, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  GW.liveFind = async (race, key) => {
+    try {
+      const w = GW.weekend(race).find((s) => s.key === key); if (!w || w.status === 'future') return null;
+      const want = key.startsWith('FP') ? 'Practice' : key === 'Q' ? 'Qualifying' : key === 'RACE' ? 'Race' : null;
+      let from = GW.store.get('f1mFrom', 100), hit = null;
+      for (let i = 0; i < 3 && !hit; i++) {
+        const list = await F1M('scan=1&from=' + from); if (!list.length) break;
+        hit = list.filter((x) => x.n && x.at >= +w.start - 10 * 60e3 && x.at <= +w.end + 5 * 3600e3 && (want ? x.type === want : /sprint/i.test(x.name + ' ' + x.type))).sort((a, b) => Math.abs(a.at - +w.end) - Math.abs(b.at - +w.end))[0];
+        from = list[list.length - 1].id + 1;
+      }
+      return hit ? { item: hit, j: await F1M('id=' + hit.id) } : null;
+    } catch { return null; }
+  };
+  GW.liveTable = (j) => {
+    const rows = (j.rows || []).filter((r) => r.position).sort((a, b) => a.position - b.position), ok = (v) => (v == null || v === '' || v === '-' ? '<i class="mu">—</i>' : esc(v));
+    const cls = (v) => { v = String(v || '').toLowerCase(); return /purple|overall|roxo/.test(v) ? ' pu' : /green|verde|personal|pb/.test(v) ? ' gr' : ''; };
+    if (!rows.length) return '';
+    return `<div class="tbl-wrap"><table class="lbt"><thead><tr><th>Pos</th><th>Piloto</th><th class="r">Gap</th><th class="r">Int.</th><th class="r">Última</th><th class="r">Melhor</th><th class="r s">S1</th><th class="r s">S2</th><th class="r s">S3</th><th>Pneu</th><th class="r">Box</th></tr></thead><tbody>${rows.map((r) => `<tr><td><span class="pos${r.position <= 3 ? ' p' + r.position : ''}">${esc(r.position)}</span></td><td><div class="drv" style="--tc:${esc(r.team_colour || '#888')}"><i></i><div><b>${esc(r.driver_full_name || r.driver || '')}</b><small>${esc(r.team || '')} · #${esc(r.number || '')}</small></div></div></td><td class="r">${ok(r.gap)}</td><td class="r">${ok(r.interval)}</td><td class="r${cls(r.last_lap_status)}">${/BOX/i.test(r.last_lap || '') ? '<span class="chip">Box</span>' : ok(r.last_lap)}</td><td class="r${cls(r.best_lap_status)}">${ok(r.best_lap)}</td><td class="r s${cls(r.sector_1_status)}">${ok(r.sector_1)}</td><td class="r s${cls(r.sector_2_status)}">${ok(r.sector_2)}</td><td class="r s${cls(r.sector_3_status)}">${ok(r.sector_3)}</td><td>${r.compound ? `<span class="tyre">${esc(r.compound)}</span>` : ok(r.tyres)}</td><td class="r">${esc(r.pits ?? 0)}</td></tr>`).join('')}</tbody></table></div>`;
+  };
+  async function liveFall(body, race, ses, tk) {
+    const f = await GW.liveFind(race, KEY_OF[ses]); if (!f || !GW.alive(tk)) return false;
+    const t = GW.liveTable(f.j); if (!t) return false;
+    body.innerHTML = `<div class="banner info" style="margin-bottom:10px">${f.j.final ? 'Estes são os tempos finais da sessão.' : 'Sessão em andamento: tempos atualizados em tempo real.'} Os dados oficiais completos aparecem aqui sozinhos assim que forem publicados.</div><div class="card"><div class="card-h"><h2>${esc((f.j.session || {}).name || 'Sessão')} — tempos</h2></div>${t}</div>`;
+    const el = body.parentElement; clearTimeout(el._rt); el._rt = setTimeout(() => { const b = $('#rtabs button.on', el); if (b && GW.alive(tk)) b.click(); }, 45000);
+    return true;
+  }
   GW.pages.results = async (p, el, tk) => {
     await J.init();
     const years = await J.seasons(); const y = +p[0] || GW.ctx.year || GW.currentYear;
@@ -178,7 +207,7 @@
     const body = $('#rbody', el); let tab = jkind(ses) ? 'res' : 'laps'; $$('#rtabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.t === tab));
     const setTab = async (t) => {
       tab = t; $$('#rtabs button', el).forEach((b) => b.classList.toggle('on', b.dataset.t === t)); body.innerHTML = GW.loading();
-      clearTimeout(el._rt); try { await ({ res: tabRes, pit: tabPit, tyre: tabTyre, laps: tabLaps }[t])(body, y, round, ses, race, tk); } catch (e) { if (GW.alive(tk)) { body.innerHTML = GW.error(e, true); const b = $('[data-retry]', body); if (b) b.onclick = () => setTab(t); if (/ainda não estão disponíveis/.test(e.message || '')) el._rt = setTimeout(() => { if (GW.alive(tk) && tab === t) setTab(t); }, 30000); } }
+      clearTimeout(el._rt); try { await ({ res: tabRes, pit: tabPit, tyre: tabTyre, laps: tabLaps }[t])(body, y, round, ses, race, tk); if (GW.alive(tk) && t !== 'res' && body.querySelector(':scope > .state')) await liveFall(body, race, ses, tk); } catch (e) { if (GW.alive(tk) && await liveFall(body, race, ses, tk)) return; if (GW.alive(tk)) { body.innerHTML = GW.error(e, true); const b = $('[data-retry]', body); if (b) b.onclick = () => setTab(t); if (/ainda não estão disponíveis/.test(e.message || '')) el._rt = setTimeout(() => { if (GW.alive(tk) && tab === t) setTab(t); }, 30000); } }
     };
     $$('#rtabs button', el).forEach((b) => (b.onclick = () => setTab(b.dataset.t))); setTab(tab);
   };
@@ -186,6 +215,7 @@
   async function tabRes(body, y, r, ses, race, tk) {
     if (!jkind(ses)) { body.innerHTML = `<div class="banner info">Treinos livres não têm classificação final. Veja a aba <b>Melhores voltas e setores</b> </div>`; return; }
     const { rows, race: rc } = await J.session(y, r, jkind(ses)); if (!GW.alive(tk)) return;
+    if (!rows.length && GW.raceStatus(race) !== 'future' && await liveFall(body, race, ses, tk)) return;
     if (!rows.length) { body.innerHTML = GW.empty('Sem resultados', GW.raceStatus(race) === 'future' ? 'Esta sessão ainda não aconteceu.' : 'O resultado ainda não foi publicado.'); return; }
     const isQ = ses === 'qualifying'; const leadLaps = Math.max(...rows.map((x) => +x.laps || 0));
     const cols = isQ ? [
