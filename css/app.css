@@ -761,3 +761,21 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .lang-sel:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:1240px){.lang-sel{height:44px;margin-left:auto}.lang-sel+.sup-link{margin-left:0!important}}
 @media(max-width:700px){.lang-sel{padding:0 20px 0 8px;font-size:12px}}
+
+/* seletor de idioma (menu) */
+.lang{position:relative;flex:none}
+.lang-b{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 11px;border:1px solid var(--line-2);border-radius:10px;background:var(--card-2);color:var(--tx);font:700 12px var(--mono,monospace);letter-spacing:.04em;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+.lang-b:hover,.lang-b[aria-expanded="true"]{border-color:#4a5578;background:#1a2236}
+.lang-b:focus-visible,.lang-m button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.lang-b svg{flex:none;opacity:.85}
+.lang-m{position:absolute;right:0;top:calc(100% + 8px);min-width:220px;padding:6px;border:1px solid var(--line-2);border-radius:14px;background:var(--bg-2,#0f131e);box-shadow:0 18px 44px rgba(0,0,0,.55);z-index:130;display:grid;gap:2px}
+.lang-m[hidden]{display:none}
+.lang-m button{display:flex;align-items:center;justify-content:space-between;gap:18px;white-space:nowrap;padding:10px 12px;border:0;border-radius:9px;background:transparent;color:var(--tx);font:500 14px Inter,sans-serif;text-align:left;cursor:pointer;width:100%}
+.lang-m button b{font:700 11px var(--mono,monospace);color:var(--tx-3);letter-spacing:.06em}
+.lang-m button:hover{background:var(--card-2)}
+.lang-m button[aria-checked="true"]{background:var(--red-dim,rgba(225,6,0,.15))}
+.lang-m button[aria-checked="true"] b{color:#ff6a60}
+@media(max-width:1240px){.lang-b{height:44px;padding:0 12px}.lang{margin-left:auto}.lang+.sup-link{margin-left:0!important}}
+@media(max-width:700px){.lang-b{padding:0 10px;gap:5px}.lang-b svg:first-child{display:none}.lang-m{right:-4px;min-width:220px}}
+/* barra de navegação mais compacta em telas médias, para caber tudo */
+@media(min-width:1241px) and (max-width:1499px){.nav-in{gap:10px}.nav-links{margin-left:4px}.nav-links a{padding:8px 6px;font-size:12.5px}.nav-links a.on::after{left:6px;right:6px}}

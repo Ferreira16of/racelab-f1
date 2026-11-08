@@ -147,7 +147,30 @@
   });
 
   I.apply = () => { walk(document.documentElement); metas(); };
-  const syncSel = () => { const s = document.getElementById('langSel'); if (s) s.value = I.lang; };
+  const NAMES = { pt: ['PT-BR', 'Português (Brasil)'], en: ['EN', 'English'], es: ['ES', 'Español'] };
+  const GLOBE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.500 18.300 12 21c-2.500-2.700-3.800-5.700-3.800-9S9.500 5.700 12 3z"/></svg>';
+  const CHEV = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  let menu = null;
+  const buildMenu = () => {
+    const old = document.getElementById('langSel'); if (!old) return;
+    const w = document.createElement('div'); w.className = 'lang'; w.id = 'lang';
+    w.innerHTML = `<button type="button" class="lang-b" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-label="Idioma" title="Idioma">${GLOBE}<span id="langCur">PT-BR</span>${CHEV}</button><div class="lang-m" id="langMenu" role="menu" hidden>${Object.keys(NAMES).map((k) => `<button type="button" role="menuitemradio" data-l="${k}" aria-checked="false"><span>${NAMES[k][1]}</span><b>${NAMES[k][0]}</b></button>`).join('')}</div>`;
+    old.replaceWith(w); menu = w;
+    const btn = w.querySelector('#langBtn'), pop = w.querySelector('#langMenu');
+    const close = (back) => { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (back) btn.focus(); };
+    btn.addEventListener('click', () => { const open = pop.hidden; pop.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) { const cur = pop.querySelector('[aria-checked="true"]'); if (cur) cur.focus(); } });
+    pop.addEventListener('click', (e) => { const b = e.target.closest('[data-l]'); if (!b) return; close(true); I.set(b.dataset.l, true); });
+    document.addEventListener('click', (e) => { if (!w.contains(e.target)) close(false); });
+    w.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { close(true); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { const items = [...pop.querySelectorAll('[data-l]')]; if (pop.hidden) { btn.click(); e.preventDefault(); return; } const i = items.indexOf(document.activeElement); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); e.preventDefault(); }
+    });
+  };
+  const syncSel = () => {
+    if (!menu) return;
+    menu.querySelector('#langCur').textContent = NAMES[I.lang][0];
+    menu.querySelectorAll('[data-l]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.l === I.lang)));
+  };
   I.set = (l, manual) => {
     if (!LANGS[l]) return;
     I.lang = l; document.documentElement.lang = LOC[l];
@@ -156,8 +179,7 @@
     if (manual && window.GW && GW.reload) GW.reload(); // refaz a tela com datas e números no formato do idioma
   };
   const start = () => {
-    const d = detect(); I.lang = d.l; document.documentElement.lang = LOC[I.lang]; syncSel();
-    const s = document.getElementById('langSel'); if (s) s.addEventListener('change', () => I.set(s.value, true));
+    const d = detect(); I.lang = d.l; document.documentElement.lang = LOC[I.lang]; buildMenu(); syncSel();
     obs.observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
     I.apply();
   };
