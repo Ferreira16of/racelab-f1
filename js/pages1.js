@@ -52,7 +52,7 @@
   /** linha de sessão: ao vivo leva à cronometragem; concluída leva ao resultado; futura não é link */
   GW.sessRow = (y, round, s) => {
     const live = s.status === 'live', h = live ? '#/live' : sessHref(y, round, s);
-    const chip = s.status === 'future' ? '<span class="chip next">futura</span>' : live ? '<span class="chip live"><i class="livedot"></i> Acompanhar ao vivo</span>' : h ? '<span class="chip">ver resultado</span>' : '<span class="chip">Concluída</span>';
+    const chip = s.status === 'future' ? '<span class="chip next">agendada</span>' : live ? '<span class="chip live"><i class="livedot"></i> Acompanhar ao vivo</span>' : h ? '<span class="chip">ver resultado</span>' : '<span class="chip">Concluída</span>';
     return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start) + ' ' + U.tzShort())}${s.hasTime ? '' : ' (hora não divulgada)'}</span>${chip}${h ? GW.ic('chev') : ''}</${h ? 'a' : 'div'}>`;
   };
   const sessHref = (y, round, s) => (s.status !== 'future' && (s.kind || (+y >= 2023 && (s.key.startsWith('FP') || s.key === 'SQ'))) ? `#/results/${y}/${round}/${SES_ROUTE[s.key]}` : null);
@@ -151,7 +151,7 @@
     el.innerHTML = `<div class="page-head"><div><span class="eyebrow">Temporadas</span><h1>Calendário ${y}</h1><p class="sub">${sched.length} Grandes Prêmios · ${y === GW.currentYear ? 'temporada em curso' : 'temporada concluída (dados históricos)'} · nomenclatura de sprint conforme ${y}.</p></div>
       <div class="row">${GW.ctl('sy', 'Temporada', GW.options(years.map((v) => [v, v]), y))}</div></div>
       ${sel ? '<div id="detail"></div>' : ''}
-      <div class="cal">${st.length ? st.map(({ r, s }) => `<a class="race-card ${s} ${r.round === round ? 'next' : ''}" href="#/seasons/${y}/${r.round}"><div class="rd"><span>R${r.round}</span><span>${esc(fmtDay(toDate(r.date)))}</span></div><h3>${esc(r.raceName)}</h3><div class="loc">${esc(r.Circuit.circuitName)}</div><div class="loc">${esc(r.Circuit.Location.locality)}, ${esc(r.Circuit.Location.country)}</div><div>${s === 'done' ? '<span class="chip">concluída</span>' : s === 'live' ? '<span class="chip live">em andamento</span>' : '<span class="chip next">futura</span>'}${r.Sprint ? ' <span class="chip red">sprint</span>' : ''}</div></a>`).join('') : GW.empty('Calendário indisponível', 'Não há etapas cadastradas para esta temporada.')}</div>`;
+      <div class="cal">${st.length ? st.map(({ r, s }) => `<a class="race-card ${s} ${r.round === round ? 'next' : ''}" href="#/seasons/${y}/${r.round}"><div class="rd"><span>R${r.round}</span><span>${esc(fmtDay(toDate(r.date)))}</span></div><h3>${esc(r.raceName)}</h3><div class="loc">${esc(r.Circuit.circuitName)}</div><div class="loc">${esc(r.Circuit.Location.locality)}, ${esc(r.Circuit.Location.country)}</div><div>${s === 'done' ? '<span class="chip">concluída</span>' : s === 'live' ? '<span class="chip live">em andamento</span>' : '<span class="chip next">agendada</span>'}${r.Sprint ? ' <span class="chip red">sprint</span>' : ''}</div></a>`).join('') : GW.empty('Calendário indisponível', 'Não há etapas cadastradas para esta temporada.')}</div>`;
     $('#sy', el).onchange = (e) => GW.go(`seasons/${e.target.value}`);
     if (sel) {
       const w = GW.weekend(sel), i = sched.indexOf(sel), rc = sel.Circuit, started = w.some((s) => s.status !== 'future');
