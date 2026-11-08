@@ -31,7 +31,7 @@
       <div id="lv-hero">${hero}</div>
       ${showGrid ? '<div id="lv-grid" class="mt"></div>' : ''}
       <div id="lv-board" class="mt"></div>
-      ${wk.length ? `<div class="card mt"><div class="card-h"><h2>Fim de semana · ${esc(race.raceName)}</h2><span class="meta">Horários em ${U.tzNice()} (${U.tzShort()})</span></div><div class="sess-list">${wk.map((s) => { const R = { FP1: 'fp1', FP2: 'fp2', FP3: 'fp3', SQ: 'sq', SPRINT: 'sprint', Q: 'qualifying', RACE: 'race' }[s.key], h = s.status !== 'future' && R ? `#/results/${race.season}/${race.round}/${R}` : null; return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(U.fmtDT(s.start))}</span>${s.status === 'future' ? '' : `<span class="chip ${s.status === 'live' ? 'live' : ''}">${s.status === 'live' ? 'Ao vivo' : 'Concluída'}</span>`}${h ? GW.ic('chev') : ''}</${h ? 'a' : 'div'}>`; }).join('')}</div></div>` : ''}`;
+      ${wk.length ? `<div class="card mt"><div class="card-h"><h2>Fim de semana · ${esc(race.raceName)}</h2><span class="meta">Horários em ${U.tzNice()} (${U.tzShort()})</span></div><div class="sess-list">${wk.map((s) => (s.status === 'live' ? `<div class="sess live"><span class="n">${esc(s.name)}</span><span class="t">${esc(U.fmtDT(s.start))}</span><span class="chip live"><i class="livedot"></i> Ao vivo agora</span></div>` : GW.sessRow(race.season, race.round, s))).join('')}</div></div>` : ''}`;
 
     let stopBoard = () => {};
     liveBoard($('#lv-board', el), tk).then((f) => { if (!GW.alive(tk)) f(); else stopBoard = f; });

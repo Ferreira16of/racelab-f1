@@ -49,6 +49,12 @@
 
   const SES_ROUTE = { FP1: 'fp1', FP2: 'fp2', FP3: 'fp3', SQ: 'sq', SPRINT: 'sprint', Q: 'qualifying', RACE: 'race' };
   /** link de resultados da sessão, só se ela já aconteceu e há resultado disponível */
+  /** linha de sessão: ao vivo leva à cronometragem; concluída leva ao resultado; futura não é link */
+  GW.sessRow = (y, round, s) => {
+    const live = s.status === 'live', h = live ? '#/live' : sessHref(y, round, s);
+    const chip = s.status === 'future' ? '<span class="chip next">futura</span>' : live ? '<span class="chip live"><i class="livedot"></i> Acompanhar ao vivo</span>' : h ? '<span class="chip">ver resultado</span>' : '<span class="chip">Concluída</span>';
+    return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start) + ' ' + U.tzShort())}${s.hasTime ? '' : ' (hora não divulgada)'}</span>${chip}${h ? GW.ic('chev') : ''}</${h ? 'a' : 'div'}>`;
+  };
   const sessHref = (y, round, s) => (s.status !== 'future' && (s.kind || (+y >= 2023 && (s.key.startsWith('FP') || s.key === 'SQ'))) ? `#/results/${y}/${round}/${SES_ROUTE[s.key]}` : null);
   /* ---------- HOME ---------- */
   GW.pages.home = async (p, el, tk) => {
@@ -79,7 +85,7 @@
     </section>
     <div class="grid g-main mt">
       <div class="card"><div class="card-h"><h2>${nextR ? 'Sessões do fim de semana' : 'Última etapa'}</h2><span class="meta">Horários em ${U.tzNice()} (${U.tzShort()})</span></div>
-        ${wk.length ? `<div class="sess-list">${wk.map((s) => { const h = nextR ? sessHref(y, nextR.round, s) : null; return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start))}${s.hasTime ? '' : ' (hora não divulgada)'}</span>${s.status === 'future' ? '' : `<span class="chip ${s.status === 'live' ? 'live' : ''}">${s.status === 'live' ? 'Ao vivo' : 'Concluída'}</span>`}${h ? GW.ic('chev') : ''}</${h ? 'a' : 'div'}>`; }).join('')}</div>` : GW.empty('Sem sessões futuras', 'Não há sessões pendentes na temporada.')}
+        ${wk.length ? `<div class="sess-list">${wk.map((s) => (nextR ? GW.sessRow(y, nextR.round, s) : '')).join('')}</div>` : GW.empty('Sem sessões futuras', 'Não há sessões pendentes na temporada.')}
       </div>
       <div class="card"><div class="card-h"><h2>Último GP</h2>${GW.src('Jolpica-F1', GW.cachedAt(`https://api.jolpi.ca/ergast/f1/${y}/${lastDone?.r.round}/results.json?limit=100`))}</div>
         ${lastRes?.rows.length ? `<h3 style="margin-bottom:4px">${esc(lastDone.r.raceName)}</h3><p class="tx2" style="margin-bottom:10px">${esc(fmtDay(toDate(lastDone.r.date)))} · ${esc(lastDone.r.Circuit.circuitName)}</p>
@@ -147,7 +153,7 @@
       const w = GW.weekend(sel), i = sched.indexOf(sel), rc = sel.Circuit, started = w.some((s) => s.status !== 'future');
       $('#detail', el).innerHTML = `<div class="card" style="margin-bottom:20px"><div class="card-h"><div><span class="eyebrow">Etapa ${sel.round} de ${sched.length}</span><h2 style="font-size:24px">${esc(sel.raceName)}</h2><p class="tx2">${esc(rc.circuitName)} · ${esc(rc.Location.locality)}, ${esc(rc.Location.country)}</p></div>
         <div class="row">${i > 0 ? `<a class="btn sm" href="#/seasons/${y}/${sched[i - 1].round}">← ${esc(sched[i - 1].raceName.replace(' Grand Prix', ''))}</a>` : ''}${i < sched.length - 1 ? `<a class="btn sm" href="#/seasons/${y}/${sched[i + 1].round}">${esc(sched[i + 1].raceName.replace(' Grand Prix', ''))} →</a>` : ''}</div></div>
-        <div class="sess-list">${w.map((s) => { const h = sessHref(y, sel.round, s); return `<${h ? `a href="${h}"` : 'div'} class="sess ${s.status}${h ? ' go' : ''}"><span class="n">${esc(s.name)}</span><span class="t">${esc(fmtDT(s.start))} ${U.tzShort()}</span>${h ? `<span class="chip">ver resultado</span>${GW.ic('chev')}` : `<span class="chip ${s.status === 'future' ? 'next' : 'live'}">${s.status === 'future' ? 'futura' : 'em andamento'}</span>`}</${h ? 'a' : 'div'}>`; }).join('')}</div>
+        <div class="sess-list">${w.map((s) => GW.sessRow(y, sel.round, s)).join('')}</div>
         <div class="row mt-s">${started ? `<a class="btn" href="#/results/${y}/${sel.round}">${GW.ic('flag')} Resultados</a>${y >= 2023 ? `<a class="btn" href="#/telemetry/${y}/${sel.round}">${GW.ic('pulse')} Telemetry Lab</a>` : ''}` : '<span class="chip next">Resultados e telemetria são liberados quando o fim de semana começa</span>'}<a class="btn" href="#/circuits/${rc.circuitId}/${y}">${GW.ic('map')} Circuito</a></div></div>`;
       $('#detail', el).scrollIntoView({ block: 'nearest' });
     }
@@ -185,7 +191,7 @@
   async function liveFall(body, race, ses, tk) {
     const f = await GW.liveFind(race, KEY_OF[ses]); if (!f || !GW.alive(tk)) return false;
     const t = GW.liveTable(f.j, { year: +race.season, fn: await GW.liveDriverLinks(+race.season) }); if (!t) return false;
-    body.innerHTML = `<div class="banner info" style="margin-bottom:10px">${f.j.final ? 'Estes são os tempos finais da sessão.' : 'Sessão em andamento: tempos atualizados em tempo real.'} Os dados oficiais completos aparecem aqui sozinhos assim que forem publicados.</div><div class="card"><div class="card-h"><h2>${esc((f.j.session || {}).name || 'Sessão')} — tempos</h2></div>${t}</div>`;
+    body.innerHTML = `<div class="banner info" style="margin-bottom:10px">${f.j.final ? 'Estes são os tempos finais da sessão.' : '<b>Sessão em andamento</b>: tempos atualizados em tempo real. <a href="#/live">Abrir a tela Ao vivo</a>.'} Os dados oficiais completos aparecem aqui sozinhos assim que forem publicados.</div><div class="card"><div class="card-h"><h2>${esc((f.j.session || {}).name || 'Sessão')} — tempos</h2></div>${t}</div>`;
     const el = body.parentElement; clearTimeout(el._rt); el._rt = setTimeout(() => { const b = $('#rtabs button.on', el); if (b && GW.alive(tk)) b.click(); }, 45000);
     return true;
   }
