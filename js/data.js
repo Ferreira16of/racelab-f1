@@ -227,7 +227,10 @@
   GW.hydratePhotos = (root) => {
     root.querySelectorAll('.avatar[data-id]').forEach(async (a) => {
       const d = { driverId: a.dataset.id, givenName: a.dataset.given, familyName: a.dataset.family, dateOfBirth: a.dataset.dob };
-      const u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean)).catch(() => null);
+      let u = await GW.driverPhoto(d, +a.dataset.year || GW.currentYear, (a.dataset.teams || '').split(',').filter(Boolean)).catch(() => null);
+      const loads = (x) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i.naturalWidth > 0); i.onerror = () => ok(false); i.src = x; setTimeout(() => ok(false), 8000); });
+      if (u && !(await loads(u))) u = await GW.statsf1Photo(d).catch(() => null); // imagem quebrada: tenta o arquivo histórico; senão, iniciais
+      if (u && !(await loads(u))) u = null;
       if (u && a.isConnected) {
         a.style.backgroundImage = `url("${u}")`; a.classList.add('photo'); a.textContent = '';
         if (/statsf1/.test(u)) a.classList.add('contain');
