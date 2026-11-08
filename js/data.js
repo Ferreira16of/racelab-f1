@@ -146,7 +146,7 @@
   GW.trackLengthKm = (mv) => { let L = 0; for (let i = 0; i < mv.x.length - 1; i++) L += Math.hypot(mv.x[i + 1] - mv.x[i], mv.y[i + 1] - mv.y[i]); L += Math.hypot(mv.x[0] - mv.x.at(-1), mv.y[0] - mv.y.at(-1)); return L / 10000; };
 
   /* ---------- helpers de domínio ---------- */
-  GW.fullName = (d) => `${d.givenName} ${d.familyName}`;
+  GW.fullName = (d) => `${d.givenName || ""} ${d.familyName}`.trim();
   GW.pts = (v) => (isNum(v) ? (+v % 1 ? (+v).toFixed(1) : String(+v)) : '—');
   const ISO = { British: 'gb', Dutch: 'nl', Monegasque: 'mc', Spanish: 'es', Australian: 'au', Mexican: 'mx', Thai: 'th', Japanese: 'jp', Canadian: 'ca', French: 'fr', German: 'de', Finnish: 'fi', Danish: 'dk', Chinese: 'cn', Italian: 'it', American: 'us', Brazilian: 'br', 'New Zealander': 'nz', Argentine: 'ar', Argentinian: 'ar', Austrian: 'at', Swiss: 'ch', Belgian: 'be', Swedish: 'se', Polish: 'pl', Russian: 'ru', Venezuelan: 've', Indonesian: 'id', Colombian: 'co', Hungarian: 'hu', Irish: 'ie', Portuguese: 'pt', Uruguayan: 'uy', Chilean: 'cl', Malaysian: 'my', Indian: 'in', Czech: 'cz', Liechtensteiner: 'li', 'South African': 'za', Rhodesian: 'zw', Estonian: 'ee', Monacan: 'mc', 'East German': 'de', Thai2: 'th' };
   /** bandeira como imagem (emoji de bandeira não aparece no Windows) */

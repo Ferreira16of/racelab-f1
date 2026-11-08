@@ -208,7 +208,7 @@
     $$('.seg button', el).forEach((b) => (b.onclick = () => { GW.store.set('warsMode', b.dataset.m); GW.reload(); }));
     const wy = $('#wy', el); if (wy) wy.onchange = (e) => { GW.store.set('warsYear', +e.target.value); GW.store.set('warsPicks', []); GW.go(`wars/${e.target.value}`); };
     const av = (c) => `<div class="avatar sm" data-id="${esc(c.d.driverId)}" data-given="${esc(c.d.givenName)}" data-family="${esc(c.d.familyName)}" data-dob="${esc(c.d.dateOfBirth || '')}" data-year="${season ? y : 0}" data-teams="${(c.teams || []).map((t) => t.constructorId).join(',')}">${esc(c.d.code || c.d.familyName.slice(0, 3).toUpperCase())}</div>`;
-    const stub = (id) => ({ d: { driverId: id, givenName: id.replace(/_/g, ' '), familyName: id.replace(/_/g, ' ') }, teams: [] });
+    const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1), stub = (id) => ({ d: { driverId: id, givenName: '', familyName: id.split('_').slice(-1).map(cap).join('') }, teams: [] });
     const save = () => { GW.store.set(season ? 'warsPicks' : 'warsCareer', picks); GW.setCtx({ drivers: picks }); };
     const run = () => { save(); drawChips(); drawPresets(); (season ? seasonWar : careerWar)($('#wb', el), picks, sd, y, tk); };
     const set = (ids) => { picks = ids.filter((id, i, a) => a.indexOf(id) === i).slice(0, MAX); run(); };
@@ -242,15 +242,20 @@
       else if (e.key === 'Enter' && shown.length) { e.preventDefault(); add(shown[Math.max(0, act)].d.driverId); }
       else if (e.key === 'Escape') { closeRes(); q.blur(); }
     });
-    if (!season) { // todos os pilotos da história, páginas de 100 em segundo plano
-      (async () => {
-        const seen = new Map(); let off = 0, total = 1;
-        while (off < total && GW.alive(tk)) {
-          try { const d = await J.raw(`drivers.json?limit=100&offset=${off}`); total = +d.total; d.DriverTable.Drivers.forEach((x) => seen.set(x.driverId, { d: x, teams: [], pts: 0 })); } catch { break; }
-          off += 100; cands = [...seen.values()].sort((a, b) => a.d.familyName.localeCompare(b.d.familyName)); drawChips(); if (!res.hidden) drawRes();
-        }
-        allLoaded = true; if (GW.alive(tk)) { drawChips(); if (!res.hidden) drawRes(); }
-      })();
+    let listing = false;
+    const loadAll = async () => { // lista completa da história: só quando a pessoa abre a busca (evita competir com a carga das carreiras)
+      if (season || listing || allLoaded) return; listing = true;
+      const seen = new Map(cands.map((c) => [c.d.driverId, c])); let off = 0, total = 1;
+      while (off < total && GW.alive(tk)) {
+        try { const d = await J.raw(`drivers.json?limit=1000&offset=${off}`); total = +d.total; d.DriverTable.Drivers.forEach((x) => seen.set(x.driverId, { d: x, teams: [], pts: 0 })); } catch { break; }
+        off += d.DriverTable.Drivers.length || 1000;
+      }
+      cands = [...seen.values()].sort((a, b) => a.d.familyName.localeCompare(b.d.familyName)); allLoaded = true; listing = false;
+      if (GW.alive(tk)) { drawChips(); if (!res.hidden) drawRes(); }
+    };
+    q.addEventListener('focus', loadAll);
+    if (!season) { // dados dos pilotos já escolhidos (nome e foto certos na hora)
+      picks.filter((id) => !find(id)).forEach((id) => J.raw(`drivers/${id}.json`).then((d) => { const x = d.DriverTable.Drivers[0]; if (x && !find(id) && GW.alive(tk)) { cands.push({ d: x, teams: [], pts: 0 }); drawChips(); } }).catch(() => {}));
     }
     drawChips(); drawPresets(); run();
   };
@@ -285,7 +290,7 @@
   }
   async function careerWar(wb, picks, sd, y, tk) {
     if (picks.length < 2) { wb.innerHTML = GW.empty('Escolha ao menos dois pilotos'); return; }
-    wb.innerHTML = GW.loading('Carregando carreiras…');
+    wb.innerHTML = GW.loading('Carregando carreiras… na primeira vez pode levar alguns segundos');
     let C; try { C = await Promise.all(picks.map((id) => GW.careerFull(id))); } catch (e) { wb.innerHTML = GW.error(e); return; }
     if (!GW.alive(tk)) return;
     const rate = (c, k) => (isNum(c[k]) && c.starts ? (c[k] / c.starts) * 100 : null);

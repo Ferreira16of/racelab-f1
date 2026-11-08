@@ -796,3 +796,9 @@ footer .sup-link{color:inherit;text-decoration:underline}
 .hl-t .k{grid-area:k;font-size:10.5px;letter-spacing:.06em;white-space:normal}
 .hl-t .d{grid-area:d;font-size:13px;color:var(--tx-1,inherit)}
 .hl-t b{grid-area:v;font-size:22px;text-align:right}}
+.nav-links .nav-sp{display:none}
+@media(max-width:700px){.nav-links .nav-sp{display:flex;grid-column:1/-1;justify-content:center;background:linear-gradient(135deg,#ff2a1f,#c20a00);color:#fff;border-radius:12px;font-weight:600}.nav-links .nav-sp svg{fill:rgba(255,255,255,.25)}}
+/* Driver Wars */
+.pk-chip b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media(max-width:700px){.pk-chip{flex:1 1 100%;min-width:0}.pk-presets{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:4px}.pk-presets .chip{flex:none}.page-head .seg{width:100%}.page-head .seg button{flex:1}}

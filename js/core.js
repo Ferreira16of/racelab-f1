@@ -193,7 +193,7 @@
   let navCur = 'home';
   function renderNav(cur) {
     navCur = cur;
-    $('#navlinks').innerHTML = NAV.map(([p, t, i]) => `<a href="#/${p}" class="${p === cur ? 'on' : ''}" ${p === cur ? 'aria-current="page"' : ''}>${GW.ic(i)}<span>${t}</span>${p === 'live' && GW.liveOn ? '<i class="livedot nav-live" title="Sessão ao vivo agora"></i>' : ''}</a>`).join('');
+    $('#navlinks').innerHTML = NAV.map(([p, t, i]) => `<a href="#/${p}" class="${p === cur ? 'on' : ''}" ${p === cur ? 'aria-current="page"' : ''}>${GW.ic(i)}<span>${t}</span>${p === 'live' && GW.liveOn ? '<i class="livedot nav-live" title="Sessão ao vivo agora"></i>' : ''}</a>`).join('') + `<a href="#/sponsor" class="nav-sp ${cur === 'sponsor' ? 'on' : ''}">${GW.ic('star')}<span>Patrocine</span></a>`;
   }
   function renderCtx() {
     const c = GW.ctx, el = $('#navctx'); if (!el) return;
